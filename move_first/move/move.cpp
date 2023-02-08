@@ -1,20 +1,100 @@
-// move.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
 
 #include <iostream>
+using namespace std;
+#include "helper_odometry_class.h"
+
+void print_array(float arr[], int len) {
+    /* just printing an array
+    */
+    for (int a = 0; a < len; a++) {
+        cout << arr[a] << endl;
+    }
+
+}
+
+
+
+
+
+
+
+class Body {
+    //Body(void) { Odometry odo; };
+    Helper_odometry helper_odo;
+    float actual_x = 0;
+    float actual_y = 0;
+    float actual_theta = 0;
+    float delta_time = 0;
+   
+
+public:
+   
+
+    float calculated_odometry[3]{ 1,2,3 };
+    void odometry(float speed_L, float speed_R) {
+        
+        float INTERVAL_ODOMETRY = 0.1;
+        unsigned long previous_time = 1;
+        unsigned long current_time = 2; // millis();
+        delta_time = current_time - previous_time;
+        if (current_time - previous_time >= INTERVAL_ODOMETRY) {
+            if (speed_L == 0 && speed_R == 0) {
+                return;
+            }
+
+            float x_y_theta[3];
+            helper_odo.calculation_position(speed_L,speed_R,delta_time,
+                actual_x,actual_y,actual_theta); 
+            for (int x=0; x < 3; x++) {
+                x_y_theta[x] = helper_odo.position[x];
+            }
+            cout << "new position is: " << endl;
+            print_array(x_y_theta, 3);
+
+
+
+
+
+
+
+
+        }
+
+
+
+
+    }
+
+
+    auto move_one_step(int direction, int distance) {
+        return direction;
+
+
+    }
+
+
+
+};
+
+
+
+
+
+
+
+
+/////////////////////////////////////////////////
 
 int main()
 {
-    std::cout << "Hello World!\n";
+   
+
+    Body b;
+    b.odometry(20.09, 20.091); // answer 7.153,0,0
+
+   
+  
+
+    return 0;
 }
 
-// Run program: Ctrl + F5 or Debug > Start Without Debugging menu
-// Debug program: F5 or Debug > Start Debugging menu
-
-// Tips for Getting Started: 
-//   1. Use the Solution Explorer window to add/manage files
-//   2. Use the Team Explorer window to connect to source control
-//   3. Use the Output window to see build output and other messages
-//   4. Use the Error List window to view errors
-//   5. Go to Project > Add New Item to create new code files, or Project > Add Existing Item to add existing code files to the project
-//   6. In the future, to open this project again, go to File > Open > Project and select the .sln file
