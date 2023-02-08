@@ -47,7 +47,7 @@ public:
 
         //float result[3] = R_matrix @ A + B.T;
         float result[3] = {0,0,0};
-
+        //calculation the matrix
         float* res = &result[0];
         float* a = &A[0];
         float* r = &R_matrix[0][0];
