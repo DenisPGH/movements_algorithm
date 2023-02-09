@@ -22,13 +22,13 @@ public:
         vel_l *= rpm_to_radians;
         vel_r *= rpm_to_radians;
         curr_theta = curr_theta * (3.1415 / 180);;
-        float omega = calculation_omega(vel_l, vel_r);
+        float omega = calculation_omega(vel_l, vel_r) * delta_time;
         float R = 0;
         if (vel_l != vel_r) {
              R = width_of_car / 2.0 * ((vel_r + vel_l) / (vel_l - vel_r));
         }
         else { R = 0.0; }
-        cout << R << endl;
+       /* cout << R << endl;*/
 
         float ICC_x = curr_x - R * sin(curr_theta);
         float ICC_y = curr_y + R * cos(curr_theta);
@@ -48,17 +48,14 @@ public:
         //float result[3] = R_matrix @ A + B.T;
         float result[3] = {0,0,0};
         //calculation the matrix
-        float* res = &result[0];
-        float* a = &A[0];
-        float* r = &R_matrix[0][0];
-
-        for (int i = 0; i < 3 * 3; i++) // All array elements
-            {
-                *res = (*a * *r) + (2 * *a);
-                res++;
-                a++;
-                r++;
+      
+        for (int i = 0; i < 3 ; i++) { // All array elements
+            result[i] = 0;
+            for (int j = 0; j < 3; j++) {
+                result[j] += R_matrix[j][i] * A[i]; 
             }
+                
+         }
 
         
         position[0] = result[0] + B[0];

@@ -1,5 +1,7 @@
 
 #include <iostream>
+#include <iomanip>
+#include<stdio.h>
 using namespace std;
 #include "helper_odometry_class.h"
 
@@ -7,7 +9,10 @@ void print_array(float arr[], int len) {
     /* just printing an array
     */
     for (int a = 0; a < len; a++) {
-        cout << arr[a] << endl;
+        //std::cout << std::setprecision(4);
+        
+        //cout << arr[a] << endl;
+        printf("%0.5lf\n", arr[a]);
     }
 
 }
