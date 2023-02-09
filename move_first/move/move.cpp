@@ -2,8 +2,10 @@
 #include <iostream>
 #include <iomanip>
 #include<stdio.h>
-using namespace std;
 #include "helper_odometry_class.h"
+#include "kalman_odometry.h"
+using namespace std;
+
 
 void print_array(float arr[], int len) {
     /* just printing an array
@@ -55,6 +57,9 @@ public:
             }
             cout << "new position is: " << endl;
             print_array(x_y_theta, 3);
+            // add kalman filter here
+
+
 
 
 
@@ -95,7 +100,32 @@ int main()
    
 
     Body b;
-    b.odometry(20.09, 20.091); // answer 7.153,0,0
+    b.odometry(20.09, 20.091); // answer 7.153 , y: -0.000 , theta: -0.001,ekf= 7.179 , y: -0.020 , theta: 0.007
+
+    //////// test matrices ///////////////////////////////////
+
+    double matrix1[3][3] = { {1, 2, 3}, {4, 5, 6}, {7, 8, 9} };
+    double matrix2[3][3] = { {1, 2, 3}, {4, 5, 6}, {7, 8, 9} };
+    double results[3][3] = { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };
+
+    /*for (int i = 0; i < 3; i++)
+        for (int j = 0; j < 3; j++) {
+            for (int u = 0; u < 3; u++)
+                results[i][j] += matrix1[i][u] * matrix2[u][j];
+        }*/
+
+    KalmanOdometry k;
+    //double* r = &results;
+    k.multiply_3_x_3_matrix(matrix1, matrix2, results);
+
+    cout << endl << "Output Matrix: " << endl;
+
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            cout << results[i][j] << ".";
+        }
+        cout << endl;
+    }
 
    
   

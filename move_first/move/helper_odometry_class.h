@@ -1,4 +1,4 @@
-// ctr+ alt more lines editing
+// ctr + alt more lines editing
 #include <iostream>
 #include <cmath>
 
