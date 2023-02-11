@@ -29,6 +29,7 @@ void print_array(float arr[], int len) {
 class Body {
     //Body(void) { Odometry odo; };
     Helper_odometry helper_odo;
+    KalmanOdometry ekf_b;
     float actual_x = 0;
     float actual_y = 0;
     float actual_theta = 0;
@@ -59,6 +60,15 @@ public:
             cout << "new position is: " << endl;
             print_array(x_y_theta, 3);
             // add kalman filter here
+            ekf_b.calculation_ekf(helper_odo.position,
+                delta_time, speed_L,speed_R);
+
+            for (int x = 0; x < 3; x++) {
+                x_y_theta[x] = ekf_b.state_estimate_k_updated[x];
+            }
+            cout << "new position after ekf is: " << endl;
+            print_array(x_y_theta, 3);
+
 
 
 
@@ -101,6 +111,7 @@ int main()
    
 
     Body b;
+    KalmanOdometry k;
     b.odometry(20.09, 20.091); // answer 7.153 , y: -0.000 , theta: -0.001,ekf= 7.179 , y: -0.020 , theta: 0.007
 
     //////// test matrices ///////////////////////////////////
@@ -118,7 +129,7 @@ int main()
 
    
 
-    KalmanOdometry k;
+    
     //double* r = &results;
     //k.multiply_3_x_3_matrix(matrix1, matrix2, results);
     //k.transpose_matrix_3_x_3(matrix1, results);
@@ -127,7 +138,7 @@ int main()
     
 
 
-    cout << endl << "Output Matrix: " << endl;
+    /*cout << endl << "Output Matrix: " << endl;
     
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
@@ -143,11 +154,19 @@ int main()
             cout << matrix1[i][j] << " ";
         }
         cout << endl;
-    }
+    }*/
 
 
 
-    inverse();
+   
+
+   
+
+    
+
+
+    
+
 
    
   
