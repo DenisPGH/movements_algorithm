@@ -26,5 +26,8 @@
     <ClInclude Include="kalman_odometry.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="inverse_matrix.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

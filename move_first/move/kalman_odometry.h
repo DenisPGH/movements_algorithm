@@ -1,4 +1,7 @@
 #include <cmath>
+#include<iostream>
+using namespace std;
+const int N=3;
 
 class KalmanVariablesOdometry {
 public:
@@ -94,14 +97,8 @@ class KalmanOdometry : public KalmanVariablesOdometry {
     double prediction_ekf[3] = { 0,0,0 };
 
 private:
-
-
-    
-
-
-public:
-
-    void multiply_3_x_3_matrix(double a[3][3], double b[3][3], double c[3][3]) {
+    void multiply_3x3__3x3(const double(&a)[N][N],
+        const double(&b)[N][N], double(&c)[N][N]) {
         // multiply two matrices 3x3 and 3x3
         for (int i = 0; i < 3; i++)
             for (int j = 0; j < 3; j++) {
@@ -109,6 +106,106 @@ public:
                     c[i][j] += a[i][u] * b[u][j];
             }
     }
+
+    void transpose_matrix_3x3(const double(&a)[N][N], 
+        double(&res)[N][N]) {
+        int i, j;
+        for (i = 0; i < 3; i++) {
+            for (j = 0; j < 3; j++) {
+                res[i][j] = a[j][i];
+            }
+
+        }
+    }
+
+    void sum_two_matrices_3_x_3(const double(&a)[N][N],
+        const  double(&b)[N][N], double(&res)[N][N]) {
+        int i, j;
+        for (i = 0; i < 3; i++) {
+            for (j = 0; j < 3; j++) {
+                res[i][j] = a[i][j] + b[i][j];
+            }
+
+        }
+    }
+
+    void subtract_two_matrices_3x3__3x3(const double(&a)[N][N],
+        const  double(&b)[N][N], double(&res)[N][N]) {
+        int i, j;
+        for (i = 0; i < 3; i++) {
+            for (j = 0; j < 3; j++) {
+                res[i][j] = a[i][j] - b[i][j];
+            }
+
+        }
+    }
+
+
+    void multiply_3x3__and_3x1_(const double(&a)[N][N],
+        const double(&b)[N], double(&res)[N]) {
+        for (int i = 0; i < 3; i++) { // All array elements
+            res[i] = 0;
+            for (int j = 0; j < 3; j++) {
+                res[j] += a[j][i] * b[i];
+            }
+
+        }
+    }
+
+
+    void sum_two_matrices_3x1_3x1(const double(&a)[N],
+        const  double(&b)[N], double(&res)[N]) {
+        int i;
+        for (i = 0; i < 3; i++) {
+             res[i] = a[i] + b[i];
+        }
+    }
+
+    void subtract_two_matrices_3x1__3x1(const double(&a)[N],
+        const  double(&b)[N], double(&res)[N]) {
+        int i;
+        for (i = 0; i < 3; i++) {
+            res[i] = a[i] - b[i];
+        }
+    }
+
+    void pinv_matrix_3x3(const double(&m)[N][N],
+        double(&res)[N][N]) {
+        double d = 0;
+
+        //finding determinant of the matrix
+        for (int i = 0; i < 3; i++)
+            d = d + (m[0][i] * (m[1][(i + 1) % 3] * m[2][(i + 2) % 3] - m[1][(i + 2) % 3] * m[2][(i + 1) % 3]));
+
+        if (d > 0)//Condition to check if the derterminat is zero or not if zero than inverse dont exists
+        {
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
+                    res[i][j] = ((m[(j + 1) % 3][(i + 1) % 3] *
+                        m[(j + 2) % 3][(i + 2) % 3]) -
+                        (m[(j + 1) % 3][(i + 2) % 3] *
+                            m[(j + 2) % 3][(i + 1) % 3])) / d; //finding adjoint and dividing it by determinant
+                }
+            }
+
+        }
+
+
+    }
+
+
+
+
+
+    
+
+
+public:
+
+   
+
+  
+    
 
     void get_B(double control_vector_k_minus_1[3], 
         double state_estimate_k_minus_1[3], double dt) {
@@ -162,10 +259,10 @@ public:
 
 
 
-    void ekf(double z_k_observation_vector[3],
+    void ekf(double (&z_k_observation_vector)[3],
         double state_estimate_k_minus_1[3],
         double control_vector_k_minus_1[3],
-        double P_k_minus_1[3][3],
+        double (&P_k_minus_1)[3][3],
         double dk) {
 
         ////// PREDICT /////////////////////////
@@ -178,8 +275,74 @@ public:
         //Predict the state covariance
         // P_k = self.A_k_minus_1 @ P_k_minus_1 @ self.A_k_minus_1.T + (self.Q_k)
         // A_k_minus_1[3][3],P_k_minus_1[3][3] @ A_k_minus_1.T[3][3] + self.Q_k[3][3]
-        double P_k[3][3];
-    
+        double P_k_1[3][3];
+        multiply_3x3__3x3(A_k_minus_1,P_k_minus_1,P_k_1);
+        double P_k_2[3][3];
+        double A_k_minus_1_T[3][3];
+        transpose_matrix_3x3(A_k_minus_1, A_k_minus_1_T);
+        multiply_3x3__3x3(P_k_1, A_k_minus_1_T, P_k_2);
+        double P_k[3][3]; // final
+        sum_two_matrices_3_x_3(P_k_2, Q_k, P_k);
+
+        ////////////////   Update (Correct) ////////////////////////
+        //= z_k_observation_vector[3] - ((self.H_k @ state_estimate_k_prediction) + (self.sensor_noise_w_k))
+        double measurement_residual_y_k_1[3];
+        double meas_res_1[3];
+        multiply_3x3__and_3x1_(H_k, state_estimate_k_prediction,meas_res_1);
+        subtract_two_matrices_3x1__3x1(z_k_observation_vector, meas_res_1, measurement_residual_y_k_1);
+        double measurement_residual_y_k[3];
+        sum_two_matrices_3x1_3x1(measurement_residual_y_k_1, sensor_noise_w_k, measurement_residual_y_k);
+        
+        //Calculate the measurement residual covariance
+        //S_k = self.H_k[3][3] @ P_k[3][3] @ self.H_k.T[3][3] + self.R_k[3][3]
+        double S_k_1[3][3];
+        multiply_3x3__3x3(H_k, P_k, S_k_1);
+        double S_k_2[3][3];
+        double H_k_Transpose[3][3];
+        transpose_matrix_3x3(H_k, H_k_Transpose);
+        multiply_3x3__3x3(S_k_1, H_k_Transpose, S_k_2);
+        double S_k[3][3];
+        sum_two_matrices_3_x_3(S_k_2, R_k, S_k);
+
+        //Calculate the near-optimal Kalman gain
+        //K_k = P_k @ self.H_k.T @ np.linalg.pinv(S_k)
+
+        double K_k_1[3][3];
+        multiply_3x3__3x3(P_k, H_k_Transpose,K_k_1);
+        double K_k[3][3];
+        double pinv_S_k[3][3];
+        pinv_matrix_3x3(S_k, pinv_S_k);
+        multiply_3x3__3x3(K_k_1, pinv_S_k, K_k);
+
+        // Calculate an updated state estimate for time k
+        //  state_estimate_k_updated = state_estimate_k_prediction + 
+        //   (K_k @ measurement_residual_y_k)
+
+        double state_estimate_k_updated[3];
+        double stat_midle[3];
+        multiply_3x3__and_3x1_(K_k, measurement_residual_y_k, stat_midle);
+        sum_two_matrices_3x1_3x1(state_estimate_k_prediction, stat_midle, state_estimate_k_updated);
+
+        // Update the state covariance estimate for time k
+        // P_k = P_k - (K_k @ self.H_k @ P_k)
+        double help_b[3][3];
+        double help_a[3][3];
+        multiply_3x3__3x3(K_k,H_k,help_a);
+        multiply_3x3__3x3(help_a,P_k,help_b);
+        double final_P_k[3][3];
+        subtract_two_matrices_3x3__3x3(P_k,help_b,final_P_k);
+
+
+
+        // Return the updated state and covariance estimates
+        // return state_estimate_k_updated, P_k //out of this scope
+
+
+
+
+
+
+
 
 
         

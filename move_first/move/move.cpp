@@ -4,6 +4,7 @@
 #include<stdio.h>
 #include "helper_odometry_class.h"
 #include "kalman_odometry.h"
+#include "inverse_matrix.h"
 using namespace std;
 
 
@@ -104,28 +105,49 @@ int main()
 
     //////// test matrices ///////////////////////////////////
 
-    double matrix1[3][3] = { {1, 2, 3}, {4, 5, 6}, {7, 8, 9} };
+    double matrix1[3][3] = { {2.1, 0.0, 0.0}, 
+                            {0.0, 2.1, 0.0},
+                            {0.0, 0.0, 2.001} };
+
+    
+   /* [[0.476 0.    0. ]
+        [0.    0.476 0.]
+    [0.    0.    0.5]]*/
     double matrix2[3][3] = { {1, 2, 3}, {4, 5, 6}, {7, 8, 9} };
     double results[3][3] = { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };
 
-    /*for (int i = 0; i < 3; i++)
-        for (int j = 0; j < 3; j++) {
-            for (int u = 0; u < 3; u++)
-                results[i][j] += matrix1[i][u] * matrix2[u][j];
-        }*/
+   
 
     KalmanOdometry k;
     //double* r = &results;
-    k.multiply_3_x_3_matrix(matrix1, matrix2, results);
+    //k.multiply_3_x_3_matrix(matrix1, matrix2, results);
+    //k.transpose_matrix_3_x_3(matrix1, results);
+    //k.sum_two_matrices_3_x_3(matrix1, matrix2, results);
+    //k.pinv_matrix_3x3(matrix1, results);
+    
+
 
     cout << endl << "Output Matrix: " << endl;
-
+    
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
-            cout << results[i][j] << ".";
+            cout << results[i][j] << "  ";
         }
         cout << endl;
     }
+
+    cout << endl << "Origin Matrix: " << endl;
+
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            cout << matrix1[i][j] << " ";
+        }
+        cout << endl;
+    }
+
+
+
+    inverse();
 
    
   
