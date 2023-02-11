@@ -18,21 +18,21 @@ std::string type_to_string(T data) {
 }
 
 
-void print_array(double (arr)[], int len) {
+void print_position(double (arr)[], int len) {
 
     /* just printing an array
     */
     for (int a = 0; a < len; a++) {
-        //std::cout << std::setprecision(4);
-
-        cout.precision(7);
-        //std::numeric_limits<double>::max();
+        cout.precision(5);
         cout << fixed;
-        cout << arr[a] << endl;
-        //cout << type_to_string(arr[a]) << "\n";
-        //printf("%0.3e\n", arr[a]);
-        //float f = (float)arr[a];
-        //printf("%.17g\n", f); // prints 12345.669921875
+        if (a == 2) {
+            //double degrees = arr[a] * (3.1415 / 180);
+            cout << arr[a] * 57.295779513 << endl;
+
+        }
+        else{ cout << arr[a] << endl; }
+        
+        
         
     }
 
@@ -48,20 +48,20 @@ class Body {
     //Body(void) { Odometry odo; };
     Helper_odometry helper_odo;
     KalmanOdometry ekf_b;
-    float actual_x = 0;
-    float actual_y = 0;
-    float actual_theta = 0;
-    float delta_time = 0;
+    double actual_x = 0;
+    double actual_y = 0;
+    double actual_theta = 0;
+    double delta_time = 0;
    
 
 public:
     double x_y_theta[3];
    
 
-    double calculated_odometry[3]{ 1,2,3 };
+    //double calculated_odometry[3]{ 1,2,3 };
     void odometry(float speed_L, float speed_R) {
         
-        float INTERVAL_ODOMETRY = 0.1;
+        double INTERVAL_ODOMETRY = 0.1;
         unsigned long previous_time = 1;
         unsigned long current_time = 2; // millis();
         delta_time = current_time - previous_time;
@@ -72,18 +72,22 @@ public:
                 for (int x = 0; x < 3; x++) {
                     x_y_theta[x] = helper_odo.position[x];
                 }
+                
                 cout << "position is: " << endl;
-                print_array(x_y_theta, 3);
+                print_position(x_y_theta, 3);
                 // add kalman filter here
-                ekf_b.calculation_ekf(helper_odo.position,
+                ekf_b.calculation_ekf(x_y_theta,
                     delta_time, speed_L, speed_R);
 
                 for (int x = 0; x < 3; x++) {
                     x_y_theta[x] = ekf_b.state_estimate_k_updated[x];
 
                 }
-                cout << "new position after ekf is: " << endl;
-                print_array(x_y_theta, 3);
+                cout << "after ekf : " << endl;
+                print_position(x_y_theta, 3);
+                actual_x = x_y_theta[0];
+                actual_y = x_y_theta[1];
+                actual_theta = x_y_theta[2];
                 
             }
 
@@ -123,7 +127,8 @@ int main()
 
     Body b;
     KalmanOdometry k;
-    b.odometry(20.09, 20.091); // answer 7.153 , y: -0.000 , theta: -0.001,ekf= 7.179 , y: -0.020 , theta: 0.007
+    b.odometry(22.09, 20.091); // answer 7.153 , y: -0.000 , theta: -0.001,ekf= 7.179 , y: -0.020 , theta: 0.007
+    b.odometry(22.09, 20.091); // answer 7.153 , y: -0.000 , theta: -0.001,ekf= 7.179 , y: -0.020 , theta: 0.007
 
     //////// test matrices ///////////////////////////////////
 

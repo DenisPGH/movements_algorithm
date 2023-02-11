@@ -1,36 +1,46 @@
 // ctr + alt more lines editing
 #include <iostream>
 #include <cmath>
+using namespace std;
 
 
 
 class Helper_odometry {
-    float rpm_to_radians = 0.10471975512;
-    float radius_wheel = 3.4;
-    float width_of_car = 18;
+    double rpm_to_radians = 0.10471975512;
+    double radius_wheel = 3.4;
+    double width_of_car = 18.0;
 
 private:
-    float calculation_omega(float vel_l, float vel_r) {
-        float  omega = ((vel_l - vel_r) / (width_of_car)) * radius_wheel;
+    double calculation_omega(double vel_l, double vel_r, double delta_time) {
+        double  omega = (((vel_l - vel_r) / (width_of_car)) * radius_wheel)*delta_time;
         return omega;
     }
 
 
 public:
+    void print_3x1_matrix(const double(&m)[3]) {
+        int i;
+        for (i = 0; i < 3; i++) {
+            cout << m[i] << " ";
+        }
+        cout << endl;
+
+    }
 
     double position[3]{ 0,0,0 }; //use this in other classes
-    void calculation_position(float vel_l, float vel_r,
-        float delta_time, float curr_x, float curr_y, float curr_theta) {
+    void calculation_position(double vel_l, double vel_r,
+        double delta_time, double curr_x, double curr_y, double curr_theta) {
         vel_l *= rpm_to_radians;
         vel_r *= rpm_to_radians;
-        curr_theta = curr_theta * (3.1415 / 180);;
-        double omega = calculation_omega(vel_l, vel_r) * delta_time;
+        //curr_theta = curr_theta * (3.1415 / 180);;
+        double omega = calculation_omega(vel_l, vel_r,delta_time) ;
+
         double R = 0;
         if (vel_l != vel_r) {
              R = width_of_car / 2.0 * ((vel_r + vel_l) / (vel_l - vel_r));
         }
         else { R = 0.0; }
-       /* cout << R << endl;*/
+       
 
         double ICC_x = curr_x - R * sin(curr_theta);
         double ICC_y = curr_y + R * cos(curr_theta);
@@ -63,6 +73,9 @@ public:
         position[0] = result[0] + B[0];
         position[1] = result[1] + B[1];
         position[2] = result[2] + B[2];
+
+        
+        
     }
 
 

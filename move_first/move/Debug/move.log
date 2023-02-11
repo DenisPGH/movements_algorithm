@@ -1,9 +1,5 @@
 ﻿  move.cpp
-C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\helper_odometry_class.h(8,26): warning C4305: 'initializing': truncation from 'double' to 'float'
-C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\helper_odometry_class.h(9,24): warning C4305: 'initializing': truncation from 'double' to 'float'
-C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\helper_odometry_class.h(26,33): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
 C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\inverse_matrix.h(16,15): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\move.cpp(64,1): warning C4305: 'initializing': truncation from 'double' to 'float'
-C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\move.cpp(67,35): warning C4244: '=': conversion from 'unsigned long' to 'float', possible loss of data
-C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\move.cpp(126,29): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\move.cpp(130,29): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\move.cpp(131,29): warning C4305: 'argument': truncation from 'double' to 'float'
   move.vcxproj -> C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\Debug\move.exe

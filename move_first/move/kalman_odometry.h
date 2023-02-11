@@ -216,6 +216,30 @@ private:
         }
     }
 
+    void print_3x3_matrix(const double(&m)[N][N]) {
+        int i, j;
+        for (i = 0; i < 3; i++) {
+            for (j = 0; j < 3; j++) {
+                cout << m[i][j]<< " ";
+
+            }
+            cout << endl;
+        }
+
+
+    }
+
+
+    void print_3x1_matrix(const double(&m)[N]) {
+        int i;
+        for (i = 0; i < 3; i++) {
+              cout << m[i] << " ";  
+        }
+        cout << endl;
+
+
+    }
+
 
 
     void get_B(double control_vector_k_minus_1[3],
@@ -266,6 +290,8 @@ private:
         prediction_ekf[0] = result[0] + B[0];
         prediction_ekf[1] = result[1] + B[1];
         prediction_ekf[2] = result[2] + B[2];
+        
+        
     }
 
 
@@ -276,52 +302,62 @@ private:
         double(&P_k_minus_1)[3][3],
         double dk) {
 
+        //print_3x1_matrix(z_k_observation_vector);
+
         ////// PREDICT /////////////////////////
-        double state_estimate_k_prediction[3];
+        double state_estimate_k_prediction[3] = {0,0,0};
+        get_B(control_vector_k_minus_1, state_estimate_k_minus_1, dk);
         for (int i = 0; i < 3; i++) {
             state_estimate_k_prediction[i] = prediction_ekf[i] +
                 process_noise_v_k_minus_1[i];
 
         }
+        
         //Predict the state covariance
         // P_k = self.A_k_minus_1 @ P_k_minus_1 @ self.A_k_minus_1.T + (self.Q_k)
         // A_k_minus_1[3][3],P_k_minus_1[3][3] @ A_k_minus_1.T[3][3] + self.Q_k[3][3]
-        double P_k_1[3][3];
+        double P_k_1[3][3]= { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };;
+       
         multiply_3x3__3x3(A_k_minus_1, P_k_minus_1, P_k_1);
-        double P_k_2[3][3];
-        double A_k_minus_1_T[3][3];
+        double P_k_2[3][3]={ {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };;
+        double A_k_minus_1_T[3][3]= { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };;
         transpose_matrix_3x3(A_k_minus_1, A_k_minus_1_T);
         multiply_3x3__3x3(P_k_1, A_k_minus_1_T, P_k_2);
-        double P_k[3][3]; // final
+        double P_k[3][3]= { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };; // final
         sum_two_matrices_3_x_3(P_k_2, Q_k, P_k);
+        //print_3x3_matrix(P_k);
+        
 
         ////////////////   Update (Correct) ////////////////////////
         //= z_k_observation_vector[3] - ((self.H_k @ state_estimate_k_prediction) + (self.sensor_noise_w_k))
-        double measurement_residual_y_k_1[3];
-        double meas_res_1[3];
+        double measurement_residual_y_k_1[3] = {0,0,0};
+        double meas_res_1[3] = {0.0,0.0,0.0};
         multiply_3x3__and_3x1_(H_k, state_estimate_k_prediction, meas_res_1);
-        subtract_two_matrices_3x1__3x1(z_k_observation_vector, meas_res_1, measurement_residual_y_k_1);
-        double measurement_residual_y_k[3];
-        sum_two_matrices_3x1_3x1(measurement_residual_y_k_1, sensor_noise_w_k, measurement_residual_y_k);
+        sum_two_matrices_3x1_3x1(meas_res_1, sensor_noise_w_k, measurement_residual_y_k_1);
+        double measurement_residual_y_k[3] = { 0,0,0 };
+        subtract_two_matrices_3x1__3x1(z_k_observation_vector, measurement_residual_y_k_1, measurement_residual_y_k);
+        
+       
+        //print_3x1_matrix(measurement_residual_y_k);
 
         //Calculate the measurement residual covariance
         //S_k = self.H_k[3][3] @ P_k[3][3] @ self.H_k.T[3][3] + self.R_k[3][3]
-        double S_k_1[3][3];
+        double S_k_1[3][3] = { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };
         multiply_3x3__3x3(H_k, P_k, S_k_1);
-        double S_k_2[3][3];
-        double H_k_Transpose[3][3];
+        double S_k_2[3][3] = { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };
+        double H_k_Transpose[3][3] = { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };
         transpose_matrix_3x3(H_k, H_k_Transpose);
         multiply_3x3__3x3(S_k_1, H_k_Transpose, S_k_2);
-        double S_k[3][3];
+        double S_k[3][3] = { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };
         sum_two_matrices_3_x_3(S_k_2, R_k, S_k);
 
         //Calculate the near-optimal Kalman gain
         //K_k = P_k @ self.H_k.T @ np.linalg.pinv(S_k)
 
-        double K_k_1[3][3];
+        double K_k_1[3][3] = { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };
         multiply_3x3__3x3(P_k, H_k_Transpose, K_k_1);
-        double K_k[3][3];
-        double pinv_S_k[3][3];
+        double K_k[3][3] = { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };
+        double pinv_S_k[3][3] = { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };
         pinv_matrix_3x3(S_k, pinv_S_k);
         multiply_3x3__3x3(K_k_1, pinv_S_k, K_k);
 
@@ -330,14 +366,14 @@ private:
         //   (K_k @ measurement_residual_y_k)
 
         //double state_estimate_k_updated[3];
-        double stat_midle[3];
+        double stat_midle[3] = { 0,0,0 };
         multiply_3x3__and_3x1_(K_k, measurement_residual_y_k, stat_midle);
         sum_two_matrices_3x1_3x1(state_estimate_k_prediction, stat_midle, state_estimate_k_updated);
 
         // Update the state covariance estimate for time k
         // P_k = P_k - (K_k @ self.H_k @ P_k)
-        double help_b[3][3];
-        double help_a[3][3];
+        double help_b[3][3] = { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };
+        double help_a[3][3] = { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };
         multiply_3x3__3x3(K_k, H_k, help_a);
         multiply_3x3__3x3(help_a, P_k, help_b);
         //double final_P_k[3][3];
@@ -353,8 +389,8 @@ private:
 
 public:
     // after ekf 
-    double final_P_k[3][3];
-    double state_estimate_k_updated[3] {0,0,0};
+    double final_P_k[3][3] = { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };
+    double state_estimate_k_updated[3]= {0,0,0};
 
     void calculation_ekf(double (&z_k)[3],double dt, double V_l,double V_r ) {
         double control_vector_k_minus_1[3] = { V_l, V_r,CONTROL_YAW_RATE }; // [rpm, rpm, rad / sec]
