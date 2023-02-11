@@ -46,7 +46,7 @@ public:
         ESTIMATET_STATE_LAST_Y,
         ESTIMATET_STATE_LAST_THETA }; // [meters, meters, radians]
 
-    double state_estimate_k_minus_1_current_step[3] = { 0, 0, 0 };
+    
     // P matrix
     double ACCURACY_STATE_X = 0.1;
     double ACCURACY_STATE_Y = 0.1;
@@ -210,6 +210,9 @@ private:
         int i;
         for (i = 0; i < 3; i++) { 
             to[i] = from[i];  
+            //cout:fixed;
+            ///out << from[i] << endl;
+            //printf("%0.6f\n", double(to[i]));
         }
     }
 
@@ -351,7 +354,7 @@ private:
 public:
     // after ekf 
     double final_P_k[3][3];
-    double state_estimate_k_updated[3];
+    double state_estimate_k_updated[3] {0,0,0};
 
     void calculation_ekf(double (&z_k)[3],double dt, double V_l,double V_r ) {
         double control_vector_k_minus_1[3] = { V_l, V_r,CONTROL_YAW_RATE }; // [rpm, rpm, rad / sec]

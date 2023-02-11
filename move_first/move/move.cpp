@@ -1,5 +1,7 @@
 
 #include <iostream>
+#include <string>
+#include <sstream>
 #include <iomanip>
 #include<stdio.h>
 #include "helper_odometry_class.h"
@@ -7,15 +9,31 @@
 #include "inverse_matrix.h"
 using namespace std;
 
+    
+template<typename T>
+std::string type_to_string(T data) {
+    std::ostringstream o;
+    o << data;
+    return o.str();
+}
 
-void print_array(float arr[], int len) {
+
+void print_array(double (arr)[], int len) {
+
     /* just printing an array
     */
     for (int a = 0; a < len; a++) {
         //std::cout << std::setprecision(4);
+
+        cout.precision(7);
+        //std::numeric_limits<double>::max();
+        cout << fixed;
+        cout << arr[a] << endl;
+        //cout << type_to_string(arr[a]) << "\n";
+        //printf("%0.3e\n", arr[a]);
+        //float f = (float)arr[a];
+        //printf("%.17g\n", f); // prints 12345.669921875
         
-        //cout << arr[a] << endl;
-        printf("%0.5lf\n", arr[a]);
     }
 
 }
@@ -37,9 +55,10 @@ class Body {
    
 
 public:
+    double x_y_theta[3];
    
 
-    float calculated_odometry[3]{ 1,2,3 };
+    double calculated_odometry[3]{ 1,2,3 };
     void odometry(float speed_L, float speed_R) {
         
         float INTERVAL_ODOMETRY = 0.1;
@@ -47,37 +66,29 @@ public:
         unsigned long current_time = 2; // millis();
         delta_time = current_time - previous_time;
         if (current_time - previous_time >= INTERVAL_ODOMETRY) {
-            if (speed_L == 0 && speed_R == 0) {
-                return;
+            if (speed_L != 0 && speed_R != 0) {
+                helper_odo.calculation_position(speed_L, speed_R, delta_time,
+                    actual_x, actual_y, actual_theta);
+                for (int x = 0; x < 3; x++) {
+                    x_y_theta[x] = helper_odo.position[x];
+                }
+                cout << "position is: " << endl;
+                print_array(x_y_theta, 3);
+                // add kalman filter here
+                ekf_b.calculation_ekf(helper_odo.position,
+                    delta_time, speed_L, speed_R);
+
+                for (int x = 0; x < 3; x++) {
+                    x_y_theta[x] = ekf_b.state_estimate_k_updated[x];
+
+                }
+                cout << "new position after ekf is: " << endl;
+                print_array(x_y_theta, 3);
+                
             }
 
-            float x_y_theta[3];
-            helper_odo.calculation_position(speed_L,speed_R,delta_time,
-                actual_x,actual_y,actual_theta); 
-            for (int x=0; x < 3; x++) {
-                x_y_theta[x] = helper_odo.position[x];
-            }
-            cout << "new position is: " << endl;
-            print_array(x_y_theta, 3);
-            // add kalman filter here
-            ekf_b.calculation_ekf(helper_odo.position,
-                delta_time, speed_L,speed_R);
-
-            for (int x = 0; x < 3; x++) {
-                x_y_theta[x] = ekf_b.state_estimate_k_updated[x];
-            }
-            cout << "new position after ekf is: " << endl;
-            print_array(x_y_theta, 3);
-
-
-
-
-
-
-
-
-
-
+            
+         
 
         }
 
