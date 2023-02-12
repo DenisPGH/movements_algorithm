@@ -29,5 +29,11 @@
     <ClInclude Include="inverse_matrix.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="kalman_rotation.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Graph_helper.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

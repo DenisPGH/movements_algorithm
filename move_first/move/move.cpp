@@ -1,4 +1,4 @@
-
+#include <vector>
 #include <iostream>
 #include <string>
 #include <sstream>
@@ -7,6 +7,8 @@
 #include "helper_odometry_class.h"
 #include "kalman_odometry.h"
 #include "inverse_matrix.h"
+#include "kalman_rotation.h"
+#include "Graph_helper.h"
 using namespace std;
 
     
@@ -48,10 +50,20 @@ class Body {
     //Body(void) { Odometry odo; };
     Helper_odometry helper_odo;
     KalmanOdometry ekf_b;
+    KalmanRotation ekf_r;
+    GraphHelper graph;
+
+
     double actual_x = 0;
     double actual_y = 0;
     double actual_theta = 0;
     double delta_time = 0;
+
+    double odo_current_step_theta = 0; // restart theta for the current measurning
+    double odo_current_new_x = 0;
+    double odo_current_new_y = 0;
+
+    double rad_to_deg = 57.29578;
    
 
 public:
@@ -102,7 +114,63 @@ public:
     }
 
 
+
+    bool rotation(int direction) {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="direction"> 0-360 degrees</param>
+        vector<int> separated_degrees_if_more_than_90;
+        odo_current_step_theta = 0;
+        odo_current_new_x = 0;
+        odo_current_new_y = 0;
+        ekf_r.restart_calculation();
+        while (true) {
+            if ((actual_theta * rad_to_deg) == direction) {
+                return true;
+            }
+            else {
+                graph.commands_for_rotation_from_direction_to_target_dir();
+                double dir_rotation=graph.dir_rotation;
+                int degrees_from_act_to_target_pos =graph.degrees_from_act_to_target_pos;
+
+                //// step 30 degrees [90,3]
+                int step = 90;
+                int delimo = degrees_from_act_to_target_pos / step;
+                if ((degrees_from_act_to_target_pos % step) == 0) {
+                    for (int i = 0; i <= delimo; i++) {
+                        separated_degrees_if_more_than_90.push_back(step);
+                        }
+                }
+                    
+                else {
+                    for (int i = 0; i <= delimo; i++) {
+                        separated_degrees_if_more_than_90.push_back(step);
+                        int rest = degrees_from_act_to_target_pos % step;
+                        separated_degrees_if_more_than_90.push_back(rest);
+                    }
+
+                }
+                //////
+                for (auto angle : separated_degrees_if_more_than_90) {
+                        cout << angle << endl;
+                };
+
+                
+                
+
+
+            }
+
+        }
+
+
+
+    }
+
+
     auto move_one_step(int direction, int distance) {
+        rotation(direction);
         return direction;
 
 
@@ -171,6 +239,8 @@ int main()
         }
         cout << endl;
     }*/
+
+    b.move_one_step(90, 10);
 
 
 

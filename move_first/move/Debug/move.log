@@ -1,5 +1,5 @@
 ﻿  move.cpp
 C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\inverse_matrix.h(16,15): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\move.cpp(130,29): warning C4305: 'argument': truncation from 'double' to 'float'
-C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\move.cpp(131,29): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\move.cpp(198,29): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\move.cpp(199,29): warning C4305: 'argument': truncation from 'double' to 'float'
   move.vcxproj -> C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\Debug\move.exe

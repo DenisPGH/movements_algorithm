@@ -142,9 +142,11 @@
     <ClCompile Include="move.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Graph_helper.h" />
     <ClInclude Include="helper_odometry_class.h" />
     <ClInclude Include="inverse_matrix.h" />
     <ClInclude Include="kalman_odometry.h" />
+    <ClInclude Include="kalman_rotation.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
