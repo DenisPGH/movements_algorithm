@@ -1,4 +1,5 @@
 #include <vector>
+#include <map>
 #include <iostream>
 #include <string>
 #include <sstream>
@@ -8,11 +9,8 @@
 #include "kalman_odometry.h"
 #include "inverse_matrix.h"
 #include "kalman_rotation.h"
-#include "Graph_helper.h"
 #include "heper_odometry_rotation.h"
 
-
-#include "rotation_graph_class.h"
 using namespace std;
 
     
@@ -55,7 +53,6 @@ class Body {
     Helper_odometry helper_odo;
     KalmanOdometry ekf_b;
     KalmanRotation ekf_r;
-    GraphHelper graph;
     OdometryRotation odo_rot;
 
 
@@ -120,11 +117,14 @@ public:
 
 
 
-    bool rotation(int direction) {
+    bool rotation(int direction,char dir_rotation, int  degrees_from_act_to_target_pos) {
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="direction"> 0-360 degrees</param>
+        /// <param name="direction"> 0-360</param>
+        /// <param name="dir_rotation"> L or R </param>
+        /// <param name="degrees_from_act_to_target_pos"> difference from cur deg to wished deg</param>
+        /// <returns></returns>
         vector<int> separated_degrees_if_more_than_90;
         odo_current_step_theta = 0;
         odo_current_new_x = 0;
@@ -135,10 +135,6 @@ public:
                 return true;
             }
             else {
-                graph.commands_for_rotation_from_direction_to_target_dir(actual_theta*rad_to_deg,direction);
-                double dir_rotation=graph.dir_rotation;
-                int degrees_from_act_to_target_pos =graph.degrees_from_act_to_target_pos;
-
                 //// step 30 degrees [90,3]
                 int step = 90;
                 int delimo = degrees_from_act_to_target_pos / step;
@@ -158,14 +154,14 @@ public:
                 }
                 //////
                 for (auto angle : separated_degrees_if_more_than_90) {
-                        //cout << angle << endl;
+                       
                         odo_current_step_theta = 0;
                         odo_current_new_x = 0;
                         odo_current_new_y = 0;
                         ekf_r.restart_calculation();
                         while (true) {
                             double error_range = 0.5;
-                            double coefficient_slow = 1.14; //1.31
+                            double coefficient_slow = 1; //1.31
                             double pid_coefficient_low_angle = 30;
                             odo_rot.calculation_rotation();
                             double current_angle_deg = odo_rot.position_rotation[2];
@@ -183,6 +179,9 @@ public:
                             }
                             else {
                                 //dir_num={'L':2,'R':3}
+                                map <char, int> dir_num{{'L',2},{'R', 3} };
+                                dir_num['L'];
+                                cout << dir_num[dir_rotation] << endl;
                                 //send comand via PID to both motors in target direction
                             }
 
@@ -204,8 +203,8 @@ public:
     }
 
 
-    auto move_one_step(int direction, int distance) {
-        rotation(direction);
+    auto move_one_step(int direction, int distance, char dir_rotation, int  degrees_from_act_to_target_pos) {
+        rotation(direction,dir_rotation,degrees_from_act_to_target_pos);
         return direction;
 
 
@@ -230,8 +229,8 @@ int main()
 
     Body b;
     KalmanOdometry k;
-    b.odometry(22.09, 20.091); // answer 7.153 , y: -0.000 , theta: -0.001,ekf= 7.179 , y: -0.020 , theta: 0.007
-    b.odometry(22.09, 20.091); // answer 7.153 , y: -0.000 , theta: -0.001,ekf= 7.179 , y: -0.020 , theta: 0.007
+    //b.odometry(22.09, 20.091); // answer 7.153 , y: -0.000 , theta: -0.001,ekf= 7.179 , y: -0.020 , theta: 0.007
+    //b.odometry(22.09, 20.091); // answer 7.153 , y: -0.000 , theta: -0.001,ekf= 7.179 , y: -0.020 , theta: 0.007
 
     //////// test matrices ///////////////////////////////////
 
@@ -275,9 +274,8 @@ int main()
         cout << endl;
     }*/
 
-    //b.move_one_step(90, 10);
-    RotationGraphNodes rgn;
-    rgn.rot_graph();
+    b.move_one_step(90, 10,'L', 30);
+   
 
 
 
