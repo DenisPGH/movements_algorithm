@@ -35,5 +35,11 @@
     <ClInclude Include="Graph_helper.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="heper_odometry_rotation.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rotation_graph_class.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

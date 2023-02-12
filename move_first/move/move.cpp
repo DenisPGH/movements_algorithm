@@ -9,6 +9,10 @@
 #include "inverse_matrix.h"
 #include "kalman_rotation.h"
 #include "Graph_helper.h"
+#include "heper_odometry_rotation.h"
+
+
+#include "rotation_graph_class.h"
 using namespace std;
 
     
@@ -52,6 +56,7 @@ class Body {
     KalmanOdometry ekf_b;
     KalmanRotation ekf_r;
     GraphHelper graph;
+    OdometryRotation odo_rot;
 
 
     double actual_x = 0;
@@ -130,7 +135,7 @@ public:
                 return true;
             }
             else {
-                graph.commands_for_rotation_from_direction_to_target_dir();
+                graph.commands_for_rotation_from_direction_to_target_dir(actual_theta*rad_to_deg,direction);
                 double dir_rotation=graph.dir_rotation;
                 int degrees_from_act_to_target_pos =graph.degrees_from_act_to_target_pos;
 
@@ -153,12 +158,42 @@ public:
                 }
                 //////
                 for (auto angle : separated_degrees_if_more_than_90) {
-                        cout << angle << endl;
+                        //cout << angle << endl;
+                        odo_current_step_theta = 0;
+                        odo_current_new_x = 0;
+                        odo_current_new_y = 0;
+                        ekf_r.restart_calculation();
+                        while (true) {
+                            double error_range = 0.5;
+                            double coefficient_slow = 1.14; //1.31
+                            double pid_coefficient_low_angle = 30;
+                            odo_rot.calculation_rotation();
+                            double current_angle_deg = odo_rot.position_rotation[2];
+                            double current_angle_deg_ekf = 
+                                ekf_r.calculation_error_rotation(current_angle_deg);
+
+                            if (current_angle_deg_ekf * coefficient_slow >= (angle)) {
+                                actual_theta = direction;
+                                odo_current_step_theta = 0;
+                                odo_current_new_x = 0;
+                                odo_current_new_y = 0;
+                                ekf_r.restart_calculation();
+                                break;
+
+                            }
+                            else {
+                                //dir_num={'L':2,'R':3}
+                                //send comand via PID to both motors in target direction
+                            }
+
+
+                        }
+                        //run stop to motors
+
+
                 };
 
-                
-                
-
+                return true;
 
             }
 
@@ -240,7 +275,9 @@ int main()
         cout << endl;
     }*/
 
-    b.move_one_step(90, 10);
+    //b.move_one_step(90, 10);
+    RotationGraphNodes rgn;
+    rgn.rot_graph();
 
 
 
