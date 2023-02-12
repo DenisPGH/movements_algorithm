@@ -44,5 +44,8 @@
     <ClInclude Include="Arduino.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="PID_rotation.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

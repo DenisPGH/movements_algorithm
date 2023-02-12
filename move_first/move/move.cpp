@@ -11,6 +11,7 @@
 #include "kalman_rotation.h"
 #include "heper_odometry_rotation.h"
 #include "Arduino.h"
+#include "PID_rotation.h"
 
 using namespace std;
 
@@ -55,6 +56,9 @@ class Body {
     KalmanOdometry ekf_b;
     KalmanRotation ekf_r;
     OdometryRotation odo_rot;
+    PID_Rotation pid_rot;
+    ControlMotors cm;
+
 
 
     double actual_x = 0;
@@ -175,10 +179,10 @@ public:
                                     odo_current_new_x, odo_current_new_y,
                                     odo_current_step_theta);
                                 double current_angle_deg = odo_rot.position_rotation[2];
-                                cout << " Before : " << current_angle_deg << endl;
+                                //cout << " Before : " << current_angle_deg << endl;
                                 double current_angle_deg_ekf =
                                     ekf_r.calculation_error_rotation(current_angle_deg);
-                                cout << " After : " << current_angle_deg_ekf << endl;
+                                //cout << " After : " << current_angle_deg_ekf << endl;
 
                                 if (current_angle_deg_ekf * coefficient_slow >= (angle)) {
                                     actual_theta = direction;
@@ -195,6 +199,10 @@ public:
                                     dir_num['L'];
                                     cout << dir_num[dir_rotation] << endl;
                                     //send comand via PID to both motors in target direction
+                                    pid_rot.output();
+                                    double L = pid_rot.left_motor_output;
+                                    double R = pid_rot.right_motor_output;
+                                    cm.movement(L, R, dir_num['L']);
                                 }
 
                                 last_time = millis(); //update time
@@ -216,6 +224,14 @@ public:
 
 
     auto move_one_step(int direction, int distance, char dir_rotation, int  degrees_from_act_to_target_pos) {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="direction"> 0-360 deg </param>
+        /// <param name="distance"> 0-500cm</param>
+        /// <param name="dir_rotation"> L or R</param>
+        /// <param name="degrees_from_act_to_target_pos"> diff now wished direction</param>
+        /// <returns></returns>
         rotation(direction,dir_rotation,degrees_from_act_to_target_pos);
         return direction;
 
@@ -240,7 +256,7 @@ int main()
    
 
     Body b;
-    KalmanOdometry k;
+    KalmanOdometry ko;
     //b.odometry(22.09, 20.091); // answer 7.153 , y: -0.000 , theta: -0.001,ekf= 7.179 , y: -0.020 , theta: 0.007
     //b.odometry(22.09, 20.091); // answer 7.153 , y: -0.000 , theta: -0.001,ekf= 7.179 , y: -0.020 , theta: 0.007
 
@@ -286,11 +302,11 @@ int main()
         cout << endl;
     }*/
 
-    //b.move_one_step(90, 10,'L', 30);
-    cout << "Rotation: " << endl;
+    b.move_one_step(90, 10,'L', 30);
+    /*cout << "Rotation: " << endl;
     KalmanRotation kff;
     double resss= kff.calculation_error_rotation(50);
-    cout << resss << endl;
+    cout << resss << endl;*/
    
 
 

@@ -1,3 +1,5 @@
 ﻿  move.cpp
 C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\inverse_matrix.h(16,15): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\Arduino.h(45,21): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\Arduino.h(45,14): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
   move.vcxproj -> C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\Debug\move.exe
