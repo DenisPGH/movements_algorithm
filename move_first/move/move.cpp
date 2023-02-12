@@ -10,6 +10,7 @@
 #include "inverse_matrix.h"
 #include "kalman_rotation.h"
 #include "heper_odometry_rotation.h"
+#include "Arduino.h"
 
 using namespace std;
 
@@ -66,6 +67,8 @@ class Body {
     double odo_current_new_y = 0;
 
     double rad_to_deg = 57.29578;
+
+    milliseconds last_time = millis();
    
 
 public:
@@ -160,35 +163,44 @@ public:
                         odo_current_new_y = 0;
                         ekf_r.restart_calculation();
                         while (true) {
-                            double error_range = 0.5;
-                            double coefficient_slow = 1; //1.31
-                            double pid_coefficient_low_angle = 30;
-                            odo_rot.calculation_rotation();
-                            double current_angle_deg = odo_rot.position_rotation[2];
-                            double current_angle_deg_ekf = 
-                                ekf_r.calculation_error_rotation(current_angle_deg);
+                            milliseconds current_time = millis();
+                            milliseconds delta_time = (current_time - last_time);
+                            if (delta_time>= double_to_chrono(interval_delta_time)) {
 
-                            if (current_angle_deg_ekf * coefficient_slow >= (angle)) {
-                                actual_theta = direction;
-                                odo_current_step_theta = 0;
-                                odo_current_new_x = 0;
-                                odo_current_new_y = 0;
-                                ekf_r.restart_calculation();
-                                break;
+                                double error_range = 0.5;
+                                double coefficient_slow = 1; //1.31
+                                double pid_coefficient_low_angle = 30;
+                                odo_rot.calculation_rotation(speedRateL, speedRateR,
+                                    interval_delta_time,
+                                    odo_current_new_x, odo_current_new_y,
+                                    odo_current_step_theta);
+                                double current_angle_deg = odo_rot.position_rotation[2];
+                                cout << " Before : " << current_angle_deg << endl;
+                                double current_angle_deg_ekf =
+                                    ekf_r.calculation_error_rotation(current_angle_deg);
+                                cout << " After : " << current_angle_deg_ekf << endl;
 
+                                if (current_angle_deg_ekf * coefficient_slow >= (angle)) {
+                                    actual_theta = direction;
+                                    odo_current_step_theta = 0;
+                                    odo_current_new_x = 0;
+                                    odo_current_new_y = 0;
+                                    ekf_r.restart_calculation();
+                                    break;
+
+                                }
+                                else {
+                                    //dir_num={'L':2,'R':3}
+                                    map <char, int> dir_num{ {'L',2},{'R', 3} };
+                                    dir_num['L'];
+                                    cout << dir_num[dir_rotation] << endl;
+                                    //send comand via PID to both motors in target direction
+                                }
+
+                                last_time = millis(); //update time
                             }
-                            else {
-                                //dir_num={'L':2,'R':3}
-                                map <char, int> dir_num{{'L',2},{'R', 3} };
-                                dir_num['L'];
-                                cout << dir_num[dir_rotation] << endl;
-                                //send comand via PID to both motors in target direction
-                            }
-
-
+                            //run stop to motors
                         }
-                        //run stop to motors
-
 
                 };
 
@@ -274,7 +286,11 @@ int main()
         cout << endl;
     }*/
 
-    b.move_one_step(90, 10,'L', 30);
+    //b.move_one_step(90, 10,'L', 30);
+    cout << "Rotation: " << endl;
+    KalmanRotation kff;
+    double resss= kff.calculation_error_rotation(50);
+    cout << resss << endl;
    
 
 

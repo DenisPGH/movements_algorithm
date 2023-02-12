@@ -41,5 +41,8 @@
     <ClInclude Include="rotation_graph_class.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="Arduino.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

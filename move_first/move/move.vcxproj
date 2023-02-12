@@ -142,6 +142,7 @@
     <ClCompile Include="move.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Arduino.h" />
     <ClInclude Include="Graph_helper.h" />
     <ClInclude Include="helper_odometry_class.h" />
     <ClInclude Include="heper_odometry_rotation.h" />
