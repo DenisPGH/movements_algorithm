@@ -12,6 +12,7 @@
 #include "heper_odometry_rotation.h"
 #include "Arduino.h"
 #include "PID_rotation.h"
+#include "kalman_step.h"
 
 using namespace std;
 
@@ -55,6 +56,7 @@ class Body {
     Helper_odometry helper_odo;
     KalmanOdometry ekf_b;
     KalmanRotation ekf_r;
+    KalmanStep ekf_step;
     OdometryRotation odo_rot;
     PID_Rotation pid_rot;
     ControlMotors cm;
@@ -72,7 +74,7 @@ class Body {
 
     double rad_to_deg = 57.29578;
 
-    milliseconds last_time = millis();
+    double last_time = 0;
    
 
 public:
@@ -136,7 +138,7 @@ public:
         odo_current_step_theta = 0;
         odo_current_new_x = 0;
         odo_current_new_y = 0;
-        ekf_r.restart_calculation();
+        ekf_step.restart_calculation();
         while (true) {
             if ((actual_theta * rad_to_deg) == direction) {
                 return true;
@@ -165,31 +167,34 @@ public:
                         odo_current_step_theta = 0;
                         odo_current_new_x = 0;
                         odo_current_new_y = 0;
-                        ekf_r.restart_calculation();
+                        ekf_step.restart_calculation();
                         while (true) {
-                            milliseconds current_time = millis();
-                            milliseconds delta_time = (current_time - last_time);
-                            if (delta_time>= double_to_chrono(interval_delta_time)) {
+                            double current_time = 1;
+                            double delta_time = (current_time - last_time);
+                            if (delta_time>= interval_delta_time) {
 
                                 double error_range = 0.5;
                                 double coefficient_slow = 1; //1.31
                                 double pid_coefficient_low_angle = 30;
-                                odo_rot.calculation_rotation(speedRateL, speedRateR,
+                                odo_rot.calculation_rotation(speedRateL, speedRateL,
                                     interval_delta_time,
                                     odo_current_new_x, odo_current_new_y,
                                     odo_current_step_theta);
-                                double current_angle_deg = odo_rot.position_rotation[2];
+                                //double current_angle_deg[3] = odo_rot.position_rotation;
                                 //cout << " Before : " << current_angle_deg << endl;
-                                double current_angle_deg_ekf =
-                                    ekf_r.calculation_error_rotation(current_angle_deg);
-                                //cout << " After : " << current_angle_deg_ekf << endl;
+                               
+                                ekf_step.calculation_step(odo_rot.position_rotation,
+                                        double(delta_time), speedRateL, speedRateL);
+                                double current_angle_deg_ekf = 0;
+                                ekf_step.state_estimate_k_updated; //new values
+                                cout << " After : " << ekf_step.state_estimate_k_updated[2] << endl;
 
                                 if (current_angle_deg_ekf * coefficient_slow >= (angle)) {
                                     actual_theta = direction;
                                     odo_current_step_theta = 0;
                                     odo_current_new_x = 0;
                                     odo_current_new_y = 0;
-                                    ekf_r.restart_calculation();
+                                    ekf_step.restart_calculation();
                                     break;
 
                                 }
@@ -205,7 +210,7 @@ public:
                                     cm.movement(L, R, dir_num['L']);
                                 }
 
-                                last_time = millis(); //update time
+                                last_time = 2; //update time
                             }
                             //run stop to motors
                         }
@@ -257,7 +262,7 @@ int main()
 
     Body b;
     KalmanOdometry ko;
-    //b.odometry(22.09, 20.091); // answer 7.153 , y: -0.000 , theta: -0.001,ekf= 7.179 , y: -0.020 , theta: 0.007
+    b.odometry(22.09, 20.091); // answer 7.153 , y: -0.000 , theta: -0.001,ekf= 7.179 , y: -0.020 , theta: 0.007
     //b.odometry(22.09, 20.091); // answer 7.153 , y: -0.000 , theta: -0.001,ekf= 7.179 , y: -0.020 , theta: 0.007
 
     //////// test matrices ///////////////////////////////////

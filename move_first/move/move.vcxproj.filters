@@ -47,5 +47,8 @@
     <ClInclude Include="PID_rotation.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="kalman_step.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

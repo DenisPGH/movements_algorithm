@@ -3,6 +3,9 @@ using namespace std;
 
 
 class KalmanRotation {
+    /// <summary>
+    /// only for error by turning
+    /// </summary>
 
     double deg_to_rad = 0.0174532925;
     double rad_to_deg = 57.29578;
@@ -32,9 +35,7 @@ class KalmanRotation {
     double P_k_end = 0;
 
 public:
-    void restart_calculation() {
-        cout << "restart calc rot" << endl;
-    }
+    
 
     double getB(double delta_theta) {
         double B = { delta_theta * deg_to_rad };
