@@ -50,5 +50,11 @@
     <ClInclude Include="kalman_step.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="14_02_23.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="15_02_23.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
