@@ -1006,7 +1006,7 @@ unsigned long prev_bat = 0;
 
 int battery;
 double BAT = 0; //real value of the battery 2
-double bat_factor = 0;  //value for pid
+double bat_factor_pid = 0;  //value for pid
 int bat_value = 0;
 double BAT_percent = 0;
 
@@ -1417,7 +1417,7 @@ void batery_measuring() {
         if (battery > 0) {
             if (battery > upper_bat_range) { battery = upper_bat_range; }
             if (battery < low_bat_range) { battery = low_bat_range; }
-            bat_factor = map(battery, 760, 870, 40, 0); //12.54-11V
+            bat_factor_pid = map(battery, 760, 870, 40, 0); //12.54-11V
             // BAT_percent calculation
             BAT_percent = map(battery, 670, 845, 0, 100); //10.00 - 12.54 V //battery=(V*204.6)/ 3.0423
             if (BAT < 9) { BAT_percent = 0; }

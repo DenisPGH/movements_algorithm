@@ -56,5 +56,8 @@
     <ClInclude Include="15_02_23.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="PID_Straight.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

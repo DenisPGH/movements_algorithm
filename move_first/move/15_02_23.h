@@ -1,8 +1,13 @@
-///////////////////////////////////////////////////////////////////////////////////////////////////////////
-///@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@///////////////////////////
-///@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@////////////////////////////
-///@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@///////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
 /////////////////////////// ODOMETRY CLASS START /////////////////////////////////////////////////////////
 const int N = 3;
 
@@ -980,13 +985,67 @@ public:
 
 
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+///@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@///////////////////////////
+///@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@////////////////////////////
+///@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@///////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////
+#include <PID_v1.h>
+double ROBOT_X = 0; //main vaiable
+double ROBOT_Y = 0;//main vaiable
+double ROBOT_THETA = 0; //main vaiable
+double ROBOT_THETA_ROTATION = 0; // radians //main vaiable
+double TARGET_ANGLE_ROTATION = 0; // main variable
+
+const int MIN_L = 30;
+const int MIN_R = 30;
+
+const double Kp_L_theta = 30; // # 1.9
+const double Ki_L_theta = 100; //  # 0
+const double Kd_L_theta = 1; // # 0
+
+const double Kp_R_theta = 30; // # 1.9
+const double Ki_R_theta = 100; // # 0
+const double Kd_R_theta = 1; // # 0
+
+const double Kp_L = 2.9; // # 10.62
+const double Ki_L = 0; // # 0
+const double Kd_L = 0; // # 0
+
+const double Kp_R = 2.9; // # 9.2
+const double Ki_R = 0; //  # 0
+const double Kd_R = 0; // # 0
+
+const double Kp_L_rot = 2.9; // # 10.62
+const double Ki_L_rot = 0; // # 0
+const double Kd_L_rot = 0; // # 0
+
+const double Kp_R_rot = 2.9; // # 9.2
+const double Ki_R_rot = 0; //  # 0
+const double Kd_R_rot = 0; // # 0
+
+double MIN_ABSOLUTE_SPEED_L = MIN_L; //30 motor Left
+double MIN_ABSOLUTE_SPEED_R = MIN_R; //30 motor Right
+
+double rpm_L = 0;
+double rpm_R = 0;
+
+#define PID_MIN_LIMIT -255  //Min limit for PID 
+#define PID_MAX_LIMIT 255  //Max limit for PID 
+
+#define PID_SAMPLE_TIME_IN_MILLI_L 10  //This is PID sample time in milliseconds 10
+#define PID_SAMPLE_TIME_IN_MILLI_R 10  //This is PID sample time in milliseconds 10
+
+
+
+
+
 #include <Wire.h>
 unsigned long start = 0;
 
 
-double ROBOT_X = 0;
-double ROBOT_Y = 0;
-double ROBOT_THETA = 0;
+
+
 unsigned long intervalTime = 400; //dt=0.4 ms
 float speed_time_factor = intervalTime / 1000; //0.4
 
@@ -994,11 +1053,7 @@ const int DIR_AHEAD = 1;
 const int DIR_BACK = 2;
 const int DIR_STOP = 0; //stop
 
-const int MIN_L = 30;
-const int MIN_R = 30;
 
-double MIN_ABSOLUTE_SPEED_L = MIN_L; //30 motor Left
-double MIN_ABSOLUTE_SPEED_R = MIN_R; //30 motor Right
 unsigned long cur = 0;
 unsigned long prev = 0;
 unsigned long cur_bat = 0;
@@ -1006,7 +1061,7 @@ unsigned long prev_bat = 0;
 
 int battery;
 double BAT = 0; //real value of the battery 2
-double bat_factor = 0;  //value for pid
+double bat_factor_pid = 0;  //value for pid
 int bat_value = 0;
 double BAT_percent = 0;
 
@@ -1014,8 +1069,7 @@ int oko = 11; // dqsno oko
 int pin_battery = 7; // pin input status batery 12.6V
 
 ////////////////////////////////////
-double speed_L = 0;
-double speed_R = 0;
+
 bool dir_speed_L = true;
 bool dir_speed_R = true;
 int dir_speed_L_perm = 0;
@@ -1025,8 +1079,7 @@ int dist_or_speed = 0; // 0=dist, 1=speed
 double dist_cm_L = 0;
 double dist_cm_R = 0;
 ////////// speed calculation v2 /////////////////////
-double rpm_L = 0;
-double rpm_R = 0;
+
 double ang_velocity_L = 0;
 double ang_velocity_deg_L = 0;
 double ang_velocity_R = 0;
@@ -1056,13 +1109,45 @@ double wheel_round = 21.3; // obikolka na koleloto w cm
 
 
 
-///////////////////////////////// PID Speed ///////////////////////////////////////////////
-#include <PID_v1.h>
-#define PID_MIN_LIMIT -255  //Min limit for PID 
-#define PID_MAX_LIMIT 255  //Max limit for PID 
+double final_speed_l = 0; //
+double final_speed_r = 0; //
 
-#define PID_SAMPLE_TIME_IN_MILLI_L 10  //This is PID sample time in milliseconds 10
-#define PID_SAMPLE_TIME_IN_MILLI_R 10  //This is PID sample time in milliseconds 10
+double setpoint_theta = 0;
+
+double theta_pid_output_l = 0; // output PID_L
+double theta_pid_output_r = 0; // output PID_R  kakvo chislo otiva kym motori
+//@@@@@@@@@///
+
+
+const double SPEED = 20;
+double SPEED_L_target = SPEED; // #20
+double SPEED_R_target = SPEED; //
+
+double PID_STRAIGHT_OUTPUT_L = 0; // output to motors
+double PID_STRAIGHT_OUTPUT_R = 0; // out
+
+double PID_ROTATION_OUTPUT_L = 0;
+double  PID_ROTATION_OUTPUT_R = 0;
+
+
+
+double setpoint_rot_L = 0;
+double setpoint_rot_R = 0;
+
+PID ROTATION_PID_L(&TARGET_ANGLE_ROTATION, &PID_ROTATION_OUTPUT_L, &setpoint_rot_L, Kp_L_rot, Ki_L_rot, Kd_L_rot, DIRECT);
+PID ROTATION_PID_R(&TARGET_ANGLE_ROTATION, &PID_ROTATION_OUTPUT_R, &setpoint_rot_R, Kp_R_rot, Ki_R_rot, Kd_R_rot, DIRECT);
+
+
+PID THETA_PID_L(&ROBOT_THETA_ROTATION, &theta_pid_output_l, &setpoint_theta, Kp_L_theta, Ki_L_theta, Kd_L_theta, DIRECT);
+PID THETA_PID_R(&ROBOT_THETA_ROTATION, &theta_pid_output_r, &setpoint_theta, Kp_R_theta, Ki_R_theta, Kd_R_theta, DIRECT);
+
+
+PID STRAIGHT_SPEED_PID_L(&rpm_L, &PID_STRAIGHT_OUTPUT_L, &final_speed_l, Kp_L, Ki_L, Kd_L, DIRECT);
+PID STRAIGHT_SPEED_PID_R(&rpm_R, &PID_STRAIGHT_OUTPUT_R, &final_speed_r, Kp_R, Ki_R, Kd_R, DIRECT);
+
+///////////////////////////////// PID Speed ///////////////////////////////////////////////
+
+
 
 volatile long curSpeedL = 0;
 volatile long curSpeedR = 0;
@@ -1073,8 +1158,8 @@ unsigned long curTime = 0;
 unsigned long prevTime = 0;
 //unsigned long intervalTime = 300; // intensitet of speed calculation in ms 50
 
-double rps_L = 0;
-double rps_R = 0;
+//double rps_L = 0;
+//double rps_R = 0;
 
 float leftRev = 1445;  // counts per revolution motor L 1447
 float rightRev = 1441;  // counts per revolution motor R 1441
@@ -1089,18 +1174,10 @@ double speedPIDOutputL = 0; // output PID_L
 double speedRateR = 0;   // real value speed R  kolko e v momenta
 double speedPIDOutputR = 0; // output PID_R  kakvo chislo otiva kym motori
 
- // SETINGS FOR EACH MOTOR
-#define PID_speed_KPleft 6.05  //6.37  control left 6.05(11.23 V)
-#define PID_speed_KIleft  0  //
-#define PID_speed_KDleft 0    //0
-
-#define PID_speed_KPright 7   // 7    control right motor 7
-#define PID_speed_KIright  0  //
-#define PID_speed_KDright 0    //0
 
 
-PID speedPID_L(&speedRateL, &speedPIDOutputL, &setpointSpeedL, PID_speed_KPleft, PID_speed_KIleft, PID_speed_KDleft, DIRECT);
-PID speedPID_R(&speedRateR, &speedPIDOutputR, &setpointSpeedR, PID_speed_KPright, PID_speed_KIright, PID_speed_KDright, DIRECT);
+
+
 
 /////////////////// PID speed stop ////////////////////////////////////////////////////////
 
@@ -1173,8 +1250,239 @@ char DIRECTION = 'O';
 char jetson[40];
 //////////////////////// I2c stop //////////////////////////////////////////////
 
+void actuator(int mode, double pwm_l = 0, double pwm_r = 0) {
+    /// control the movements of the car
+    /// 1=ahead, 2=stop, 3=left, 4=right
+    /// movinig all motors ahead
+    if (mode == 1) {
+        direktion_L = DIR_AHEAD; direktion_R = DIR_AHEAD;
+        MIN_ABSOLUTE_SPEED_L = MIN_L; MIN_ABSOLUTE_SPEED_R = MIN_R;
+        moving_PWM(pwm_l, pwm_r);
+    }
+    // STOP 
+    else if (mode == 2) {
+        direktion_L = DIR_STOP; direktion_R = DIR_STOP;
+        moving_PWM(0, 0); MIN_ABSOLUTE_SPEED_L = 0; MIN_ABSOLUTE_SPEED_R = 0;
+        ang_velocity_L = 0; ang_velocity_R = 0; rpm_L = 0; rpm_R = 0;
+
+    }
+
+    // TURN LEFT
+    else if (mode == 3) {
+        direktion_L = DIR_BACK; direktion_R = DIR_AHEAD;
+        MIN_ABSOLUTE_SPEED_L = MIN_L; MIN_ABSOLUTE_SPEED_R = MIN_R;
+        moving_PWM(pwm_l, pwm_r);
+    }
+    // TURN RIGHT 
+    else if (mode == 4) {
+        direktion_L = DIR_AHEAD; direktion_R = DIR_BACK;
+        MIN_ABSOLUTE_SPEED_L = MIN_L; MIN_ABSOLUTE_SPEED_R = MIN_R;
+        moving_PWM(pwm_l, pwm_r);
+    }
+
+
+
+    if (LED_STATUS_JETSON == 0) { digitalWrite(oko, LOW); } // Lights on
+    else if (LED_STATUS_JETSON == 1) { digitalWrite(oko, HIGH); } // lights off
+
+
+
+}
+
+/////////////////////////////////////// BODY START /////////////////////////////////////////////////////////
+//#include <StandardCplusplus.h>
+//#include <serstream>
+//#include <string>
+//#include <vector>
+//#include <iterator>
+
+using namespace std;
+
+class Body {
+    //Body(void) { Odometry odo; };
+    ODOMETRY odo;
+    KalmanOdometry ekf_b;
+
+    KalmanStep ekf_step;
+    ODOMETRY_ROTATION odo_rot;
+
+
+    double actual_x = 0;
+    double actual_y = 0;
+    double actual_theta = 0;
+    double delta_time = 0;
+
+    double odo_current_step_theta = 0; // restart theta for the current measurning
+    double odo_current_new_x = 0;
+    double odo_current_new_y = 0;
+
+    double rad_to_deg = 57.29578;
+
+    double last_time = 0;
+
+
+public:
+    double x_y_theta[3];
+
+    bool rotation(int direction, char dir_rotation,
+        int  degrees_from_act_to_target_pos, double interval_delta_time) {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="direction"> 0-360</param>
+        /// <param name="dir_rotation"> L or R </param>
+        /// <param name="degrees_from_act_to_target_pos"> difference from cur deg to wished deg</param>
+        /// interval_delta_time = 0.4   interval of calculating speed and everything
+        /// <returns></returns>
+        //vector<int> separated_degrees_if_more_than_90;
+        int separated_degrees_if_more_than_90[3] = { 0,0,0 };
+        odo_current_step_theta = 0;
+        odo_current_new_x = 0;
+        odo_current_new_y = 0;
+        ekf_step.restart_calculation();
+        while (true) {
+            if ((actual_theta * rad_to_deg) == direction) {
+                return true;
+            }
+            else {
+                //// step 30 degrees [90,90,3]
+                int step = 90;
+                int delimo = degrees_from_act_to_target_pos / step;
+                if ((degrees_from_act_to_target_pos % step) == 0) {
+                    for (int i = 0; i <= delimo; i++) {
+                        //separated_degrees_if_more_than_90.push_back(step);
+                        separated_degrees_if_more_than_90[i]=step;
+                    }
+                }
+
+                else {
+                    for (int i = 0; i <= delimo; i++) {
+                        separated_degrees_if_more_than_90[i]=step;
+                        int rest = degrees_from_act_to_target_pos % step;
+                        separated_degrees_if_more_than_90[i+1]=rest;
+                    }
+
+                }
+                //////
+                for (auto angle : separated_degrees_if_more_than_90) {
+                    odo_current_step_theta = 0;
+                    odo_current_new_x = 0;
+                    odo_current_new_y = 0;
+                    ROBOT_THETA_ROTATION = 0;
+                    ekf_step.restart_calculation();
+                    if (angle == 0) {
+                        continue;
+                    }
+                    while (true) {
+                        double error_range = 0.5;
+                        double coefficient_slow = 1; //1.31
+                        double pid_coefficient_low_angle = 30;
+                        odo_rot.calculation_position_rotation(rpm_L, rpm_R,
+                            interval_delta_time,
+                            odo_current_new_x, odo_current_new_y,
+                            odo_current_step_theta);
+
+                        ekf_step.calculation_step(odo_rot.position_rotation,
+                            interval_delta_time, rpm_L, rpm_R);
+                        double current_angle_deg_ekf =
+                            ekf_step.state_estimate_k_updated_step[2]; //new values of theta
+
+
+                        if (current_angle_deg_ekf * coefficient_slow >= (angle)) {
+                            actual_theta = direction;
+                            odo_current_step_theta = 0;
+                            odo_current_new_x = 0;
+                            odo_current_new_y = 0;
+                            ROBOT_THETA_ROTATION = 0;
+                            ekf_step.restart_calculation();
+                            break;
+
+                        }
+                        else {
+
+                            if (dir_rotation == 'L') {
+                                actuator(3, PID_ROTATION_OUTPUT_L, PID_ROTATION_OUTPUT_R);
+                            }
+                            else if (dir_rotation == 'R') {
+                                actuator(4, PID_ROTATION_OUTPUT_L, PID_ROTATION_OUTPUT_R);
+                            }
+                        }
+
+
+                    }
+                    //run stop to motors
+                    actuator(2, 0, 0);
+                }
+
+            };
+
+            return true;
+
+        }
+
+    }
+
+
+
+
+    void move_one_step(int direction, int distance, char dir_rotation, int  degrees_from_act_to_target_pos, double interval_delta_time) {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="direction"> 0-360 deg </param>
+        /// <param name="distance"> 0-500cm</param>
+        /// <param name="dir_rotation"> L or R</param>
+        /// <param name="degrees_from_act_to_target_pos"> diff now wished direction</param>
+        /// <returns></returns>
+        bool ok = rotation(direction, dir_rotation, degrees_from_act_to_target_pos, interval_delta_time);
+
+
+
+
+    }
+
+
+
+};
+
+
+
+///////////////////////////////////// BODY STOP /////////////////////////////////////////////////////////
+
+
+
+
 
 void setup() {
+    /////////////////////////////// pid ////////////////////////////////////////
+    THETA_PID_L.SetOutputLimits(PID_MIN_LIMIT, PID_MAX_LIMIT);
+    THETA_PID_L.SetMode(AUTOMATIC);
+    THETA_PID_L.SetSampleTime(PID_SAMPLE_TIME_IN_MILLI_L);
+
+    THETA_PID_R.SetOutputLimits(PID_MIN_LIMIT, PID_MAX_LIMIT);
+    THETA_PID_R.SetMode(AUTOMATIC);
+    THETA_PID_R.SetSampleTime(PID_SAMPLE_TIME_IN_MILLI_R);
+
+
+
+    STRAIGHT_SPEED_PID_L.SetOutputLimits(PID_MIN_LIMIT, PID_MAX_LIMIT);
+    STRAIGHT_SPEED_PID_L.SetMode(AUTOMATIC);
+    STRAIGHT_SPEED_PID_L.SetSampleTime(PID_SAMPLE_TIME_IN_MILLI_L);
+
+    STRAIGHT_SPEED_PID_R.SetOutputLimits(PID_MIN_LIMIT, PID_MAX_LIMIT);
+    STRAIGHT_SPEED_PID_R.SetMode(AUTOMATIC);
+    STRAIGHT_SPEED_PID_R.SetSampleTime(PID_SAMPLE_TIME_IN_MILLI_R);
+
+
+    ROTATION_PID_L.SetOutputLimits(PID_MIN_LIMIT, PID_MAX_LIMIT);
+    ROTATION_PID_L.SetMode(AUTOMATIC);
+    ROTATION_PID_L.SetSampleTime(PID_SAMPLE_TIME_IN_MILLI_L);
+
+    ROTATION_PID_R.SetOutputLimits(PID_MIN_LIMIT, PID_MAX_LIMIT);
+    ROTATION_PID_R.SetMode(AUTOMATIC);
+    ROTATION_PID_R.SetSampleTime(PID_SAMPLE_TIME_IN_MILLI_R);
+    /////////////////////////////// pid ////////////////////////////////////////
+    
     //////////////////////// I2c start //////////////////////////////////////////////
     Wire.begin(SLAVE_ADDRESS);
     //Wire.requestTo(receiveEvent,SLAVE_ADDRESS);
@@ -1186,15 +1494,7 @@ void setup() {
     pinMode(oko, OUTPUT); //oko declare
 
   //////////////////// PID speed START /////////////////////////////////
-    speedPID_L.SetOutputLimits(PID_MIN_LIMIT, PID_MAX_LIMIT);
-    speedPID_L.SetMode(AUTOMATIC);
-    speedPID_L.SetSampleTime(PID_SAMPLE_TIME_IN_MILLI_L);
-
-    speedPID_R.SetOutputLimits(PID_MIN_LIMIT, PID_MAX_LIMIT);
-    speedPID_R.SetMode(AUTOMATIC);
-    speedPID_R.SetSampleTime(PID_SAMPLE_TIME_IN_MILLI_R);
-
-
+   
     //////////////////////// PID speed STOP /////////////////////////
     ///////////////// Encoder setup start /////////////////////////////////////////
     pinMode(enc_L, INPUT_PULLUP);
@@ -1253,56 +1553,7 @@ void loop() {
     }
 
 
-    speedPID_L.Compute(); // calculate PID speed L
-    speedPID_R.Compute(); // calculate PID speed R
-
-
-
-
-
-// movinig all motors ahead
-
-    if (funk == 5) {
-        direktion_L = DIR_AHEAD; direktion_R = DIR_AHEAD;
-        MIN_ABSOLUTE_SPEED_L = MIN_L; MIN_ABSOLUTE_SPEED_R = MIN_R;
-        // moving_PWM(jet_pid_L, jet_pid_R);
-         //moving_PWM(speedPIDOutputL,speedPIDOutputR); // error by calculating
-         //moving_PWM(45,50); 
-         //digitalWrite(oko, HIGH);
-    }
-
-
-
-    // STOP 
-    else if (funk == 4) {
-        direktion_L = DIR_STOP; direktion_R = DIR_STOP;
-        moving_PWM(0, 0); MIN_ABSOLUTE_SPEED_L = 0; MIN_ABSOLUTE_SPEED_R = 0;
-        ang_velocity_L = 0; ang_velocity_R = 0; rpm_L = 0; rpm_R = 0;
-        //digitalWrite(oko, LOW);
-    }
-
-    // TURN LEFT
-    else if (funk == 2) {
-        direktion_L = DIR_BACK; direktion_R = DIR_AHEAD;
-        MIN_ABSOLUTE_SPEED_L = MIN_L; MIN_ABSOLUTE_SPEED_R = MIN_R;
-        //moving_PWM(jet_pid_L, jet_pid_R);
-        //ang_velocity_L = 0; ang_velocity_R = 0; rpm_L=0; rpm_R=0;
-        //digitalWrite(oko, LOW);
-
-    }
-    // TURN RIGHT 
-    else if (funk == 3) {
-        direktion_L = DIR_AHEAD; direktion_R = DIR_BACK;
-        MIN_ABSOLUTE_SPEED_L = MIN_L; MIN_ABSOLUTE_SPEED_R = MIN_R;
-        //moving_PWM(jet_pid_L, jet_pid_R);
-        //ang_velocity_L = 0; ang_velocity_R = 0; rpm_L=0; rpm_R=0;
-        //digitalWrite(oko, LOW);
-    }
-
-
-
-    if (LED_STATUS_JETSON == 0) { digitalWrite(oko, LOW); } // Lights on
-    else if (LED_STATUS_JETSON == 1) { digitalWrite(oko, HIGH); } // lights off
+  
 
 
 
@@ -1321,12 +1572,9 @@ void loop() {
 ////////////////////////////// END LOOP //////////////////////////////////////////////////////////////
 ////////////////////////////// END LOOP //////////////////////////////////////////////////////////////
 
-
-
-
-
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 
 
 void moving_PWM(float outPWM_L, float outPWM_R) {
@@ -1356,8 +1604,8 @@ void moving_PWM(float outPWM_L, float outPWM_R) {
         digitalWrite(in_4, HIGH);
     }
 
-    finalPWM_L = abs(finalPWM_L) + MIN_ABSOLUTE_SPEED_L;
-    finalPWM_R = abs(finalPWM_R) + MIN_ABSOLUTE_SPEED_R;
+    finalPWM_L = abs((int)finalPWM_L) + MIN_ABSOLUTE_SPEED_L + bat_factor_pid;
+    finalPWM_R = abs((int)finalPWM_R) + MIN_ABSOLUTE_SPEED_R + bat_factor_pid;
 
     finalPWM_L = constrain(finalPWM_L, MIN_ABSOLUTE_SPEED_L, 255);
     finalPWM_R = constrain(finalPWM_R, MIN_ABSOLUTE_SPEED_R, 255);
@@ -1365,8 +1613,6 @@ void moving_PWM(float outPWM_L, float outPWM_R) {
     analogWrite(enL, finalPWM_L);  //obryshtane beshe tuk c d 
     analogWrite(enR, finalPWM_R);
 }
-
-
 
 
 
@@ -1400,8 +1646,6 @@ void counterR() {
 }
 
 
-
-
 void batery_measuring() {
     //12 V
     cur_bat = millis();
@@ -1411,13 +1655,13 @@ void batery_measuring() {
         //Serial.print(battery ); //10.84=729
         BAT = (battery / 204.6) * 3.0423; //2.95 Volts
 
-        //bat_factor=map(battery_cd,700,833,30,0);
+        //bat_factor_pid=map(battery_cd,700,833,30,0);
         const int low_bat_range = 700;
         const int upper_bat_range = 870;
         if (battery > 0) {
             if (battery > upper_bat_range) { battery = upper_bat_range; }
             if (battery < low_bat_range) { battery = low_bat_range; }
-            bat_factor = map(battery, 760, 870, 40, 0); //12.54-11V
+            bat_factor_pid = map(battery, 760, 870, 40, 0); //12.54-11V //for motors
             // BAT_percent calculation
             BAT_percent = map(battery, 670, 845, 0, 100); //10.00 - 12.54 V //battery=(V*204.6)/ 3.0423
             if (BAT < 9) { BAT_percent = 0; }
@@ -1520,3 +1764,48 @@ void info_from_jetson() {
 
     //////////////////////////////////// I2C stop ////////////////////////////////////////
 }
+
+
+void rotation_output() {
+    /// <summary>
+        /// use instance.PID_ROTATION_OUTPUT_L and PID_ROTATION_OUTPUT_R
+        /// </summary>
+
+    ROTATION_PID_L.Compute(); // calculate PID 
+    ROTATION_PID_R.Compute(); // calculate PID 
+}
+
+
+void output_straight_line() {
+    /// <summary>
+    /// calculate the output values and apply to the motors
+    /// run this in loop with control use instance.PID_STRAIGHT_OUTPUT_L
+    /// </summary>
+
+    THETA_PID_L.Compute(); // calculate PID theta error
+    THETA_PID_R.Compute(); // calculate PID theta error
+
+    if (ROBOT_THETA_ROTATION == 0) {
+        final_speed_l = SPEED_L_target;
+        final_speed_r = SPEED_R_target;
+
+    }
+
+    else if (ROBOT_THETA_ROTATION < 0) {
+        final_speed_l = SPEED_L_target - theta_pid_output_l;
+        final_speed_r = SPEED_R_target + theta_pid_output_r;
+
+    }
+
+    else if (ROBOT_THETA_ROTATION > 0) {
+        final_speed_l = SPEED_L_target + theta_pid_output_l;
+        final_speed_r = SPEED_R_target - theta_pid_output_r;
+
+    }
+
+    STRAIGHT_SPEED_PID_L.Compute(); // calculate PID final
+    STRAIGHT_SPEED_PID_R.Compute(); // 
+
+}
+
+

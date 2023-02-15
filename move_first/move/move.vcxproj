@@ -153,6 +153,7 @@
     <ClInclude Include="kalman_rotation.h" />
     <ClInclude Include="kalman_step.h" />
     <ClInclude Include="PID_rotation.h" />
+    <ClInclude Include="PID_Straight.h" />
     <ClInclude Include="rotation_graph_class.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
