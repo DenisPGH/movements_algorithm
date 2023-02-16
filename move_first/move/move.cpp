@@ -228,7 +228,7 @@ public:
     }
 
 
-    auto move_one_step(int direction, int distance, char dir_rotation, int  degrees_from_act_to_target_pos) {
+    void move_one_step(int direction, int distance, char dir_rotation, int  degrees_from_act_to_target_pos, double interval_delta_time) {
         /// <summary>
         /// 
         /// </summary>
@@ -237,11 +237,57 @@ public:
         /// <param name="dir_rotation"> L or R</param>
         /// <param name="degrees_from_act_to_target_pos"> diff now wished direction</param>
         /// <returns></returns>
-        rotation(direction,dir_rotation,degrees_from_act_to_target_pos);
-        return direction;
+        /// 
+        /// 
+        
+        double new_distance_this_step = 0;
+        ROBOT_X_ROTATION = 0;
+        ROBOT_Y_ROTATION = 0;
+        ROBOT_THETA_ROTATION = 0;
+        ekf_step.restart_calculation();
+        //dist_cm_L
+        ROBOT_LAST_TRAVELED_DISTANCE = ROBOT_CURRENT_TRAVELED_DISTANCE;
+        bool ok = rotation(direction, dir_rotation, degrees_from_act_to_target_pos, interval_delta_time);
+        if (ok == true) {
+            ROBOT_LAST_TRAVELED_DISTANCE = ROBOT_CURRENT_TRAVELED_DISTANCE;
+            ROBOT_X_ROTATION = 0;
+            ROBOT_Y_ROTATION = 0;
+            ROBOT_THETA_ROTATION = 0;
+            ekf_step.restart_calculation();
+            while (true) {
+                if (ROBOT_LAST_TRAVELED_DISTANCE == 0 and distance == 0) {
+                    new_distance_this_step = ROBOT_CURRENT_TRAVELED_DISTANCE;
+                }
+                else {
+                    new_distance_this_step =
+                        ROBOT_CURRENT_TRAVELED_DISTANCE - ROBOT_LAST_TRAVELED_DISTANCE;
+                }
+
+                if (new_distance_this_step >= distance || (distance == 0)) {
+                    //arived
+                    ROBOT_LAST_TRAVELED_DISTANCE = ROBOT_CURRENT_TRAVELED_DISTANCE;
+                    break;
+                }
+                else if (new_distance_this_step < distance) {
+                    //move ahead
+                    actuator(1, PID_STRAIGHT_OUTPUT_L, PID_STRAIGHT_OUTPUT_R);
+                }
+            }
+
+
+
+        }
+
+        actuator(2, 0, 0); //stop the car
+
+        ROBOT_ARIVED = true;
 
 
     }
+
+
+
+    
 
 
 

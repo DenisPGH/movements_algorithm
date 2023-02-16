@@ -1,4 +1,15 @@
+double ROBOT_X = 0; //main vaiable
+double ROBOT_Y = 0;//main vaiable
+double ROBOT_THETA = 0; //radians main vaiable 
+double ROBOT_THETA_ROTATION = 0; // radians //main vaiable
+double ROBOT_X_ROTATION = 0; // 
+double ROBOT_Y_ROTATION = 0; // 
+double TARGET_ANGLE_ROTATION = 0; // main variable
 
+double ROBOT_CURRENT_TRAVELED_DISTANCE = 0;
+double ROBOT_LAST_TRAVELED_DISTANCE = 0;
+
+bool ROBOT_ARRIVED = false;
 
 
 
@@ -82,6 +93,10 @@ public:
         position_full[1] = result[1] + B[1];
         position_full[2] = result[2] + B[2];
 
+        /*ROBOT_X = position_full[0];
+        ROBOT_Y = position_full[1];
+        ROBOT_THETA = position_full[2];*/
+
 
 
 
@@ -118,6 +133,15 @@ public:
     double position_rotation[3]{ 0,0,0 }; //use this in roatation
     void calculation_position_rotation(double vel_l, double vel_r,
         double delta_time, double curr_x, double curr_y, double curr_theta) {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="vel_l"></param>
+        /// <param name="vel_r"></param>
+        /// <param name="delta_time"></param>
+        /// <param name="curr_x"></param>
+        /// <param name="curr_y"></param>
+        /// <param name="curr_theta"> radians</param>
         vel_l *= rpm_to_radians;
         vel_r *= rpm_to_radians;
         //curr_theta = curr_theta * (3.1415 / 180);;
@@ -163,6 +187,10 @@ public:
         position_rotation[0] = result[0] + B[0];
         position_rotation[1] = result[1] + B[1];
         position_rotation[2] = result[2] + B[2];
+
+        /*ROBOT_X_ROTATION = position_rotation[0];
+        ROBOT_Y_ROTATION = position_rotation[1];
+        ROBOT_THETA_ROTATION = position_rotation[2];*/
 
 
 
@@ -565,6 +593,10 @@ public:
          //P_k_minus_1 = final_P_k
         assume_matrix_3x1(state_estimate_k_updated_step, state_estimate_k_minus_1);
         assume_matrix_3x3(final_P_k, P_k_minus_1);
+
+        ROBOT_X_ROTATION = state_estimate_k_updated_step[0];
+        ROBOT_Y_ROTATION = state_estimate_k_updated_step[1];
+        ROBOT_THETA_ROTATION = state_estimate_k_updated_step[2];
 
     }
 
@@ -975,6 +1007,10 @@ public:
         assume_matrix_3x1(state_estimate_k_updated, state_estimate_k_minus_1);
         assume_matrix_3x3(final_P_k, P_k_minus_1);
 
+        ROBOT_X = state_estimate_k_updated[0];
+        ROBOT_Y = state_estimate_k_updated[1];
+        ROBOT_THETA = state_estimate_k_updated[2];
+
     }
 
 
@@ -991,14 +1027,10 @@ public:
 ///@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@///////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 #include <PID_v1.h>
-double ROBOT_X = 0; //main vaiable
-double ROBOT_Y = 0;//main vaiable
-double ROBOT_THETA = 0; //main vaiable
-double ROBOT_THETA_ROTATION = 0; // radians //main vaiable
-double TARGET_ANGLE_ROTATION = 0; // main variable
 
-const int MIN_L = 30;
-const int MIN_R = 30;
+
+const int MIN_L = 27; //30
+const int MIN_R = 30; //30
 
 const double Kp_L_theta = 30; // # 1.9
 const double Ki_L_theta = 100; //  # 0
@@ -1290,13 +1322,7 @@ void actuator(int mode, double pwm_l = 0, double pwm_r = 0) {
 }
 
 /////////////////////////////////////// BODY START /////////////////////////////////////////////////////////
-//#include <StandardCplusplus.h>
-//#include <serstream>
-//#include <string>
-//#include <vector>
-//#include <iterator>
 
-using namespace std;
 
 class Body {
     //Body(void) { Odometry odo; };
@@ -1307,14 +1333,14 @@ class Body {
     ODOMETRY_ROTATION odo_rot;
 
 
-    double actual_x = 0;
+    /*double actual_x = 0;
     double actual_y = 0;
-    double actual_theta = 0;
+    double actual_theta = 0;*/
     double delta_time = 0;
 
-    double odo_current_step_theta = 0; // restart theta for the current measurning
-    double odo_current_new_x = 0;
-    double odo_current_new_y = 0;
+    //double odo_current_step_theta = 0; // restart theta for the current measurning
+    //double odo_current_new_x = 0;
+    //double odo_current_new_y = 0;
 
     double rad_to_deg = 57.29578;
 
@@ -1324,8 +1350,8 @@ class Body {
 public:
     double x_y_theta[3];
 
-    bool rotation(int direction, char dir_rotation,
-        int  degrees_from_act_to_target_pos, double interval_delta_time) {
+    bool rotation(int direction, char dir_rotation='O',
+        int  degrees_from_act_to_target_pos=0) {
         /// <summary>
         /// 
         /// </summary>
@@ -1336,12 +1362,12 @@ public:
         /// <returns></returns>
         //vector<int> separated_degrees_if_more_than_90;
         int separated_degrees_if_more_than_90[3] = { 0,0,0 };
-        odo_current_step_theta = 0;
-        odo_current_new_x = 0;
-        odo_current_new_y = 0;
+        ROBOT_X_ROTATION = 0;
+        ROBOT_Y_ROTATION = 0;
+        ROBOT_THETA_ROTATION = 0;
         ekf_step.restart_calculation();
         while (true) {
-            if ((actual_theta * rad_to_deg) == direction) {
+            if ((ROBOT_THETA * rad_to_deg) == direction) {
                 return true;
             }
             else {
@@ -1365,9 +1391,8 @@ public:
                 }
                 //////
                 for (auto angle : separated_degrees_if_more_than_90) {
-                    odo_current_step_theta = 0;
-                    odo_current_new_x = 0;
-                    odo_current_new_y = 0;
+                    ROBOT_X_ROTATION = 0;
+                    ROBOT_Y_ROTATION = 0;
                     ROBOT_THETA_ROTATION = 0;
                     ekf_step.restart_calculation();
                     if (angle == 0) {
@@ -1377,34 +1402,40 @@ public:
                         double error_range = 0.5;
                         double coefficient_slow = 1; //1.31
                         double pid_coefficient_low_angle = 30;
-                        odo_rot.calculation_position_rotation(rpm_L, rpm_R,
+                       /* odo_rot.calculation_position_rotation(rpm_L, rpm_R,
                             interval_delta_time,
                             odo_current_new_x, odo_current_new_y,
                             odo_current_step_theta);
 
                         ekf_step.calculation_step(odo_rot.position_rotation,
-                            interval_delta_time, rpm_L, rpm_R);
+                            interval_delta_time, rpm_L, rpm_R);*/
                         double current_angle_deg_ekf =
                             ekf_step.state_estimate_k_updated_step[2]; //new values of theta
 
 
                         if (current_angle_deg_ekf * coefficient_slow >= (angle)) {
-                            actual_theta = direction;
-                            odo_current_step_theta = 0;
-                            odo_current_new_x = 0;
-                            odo_current_new_y = 0;
+                            //actual_theta = direction;
+                            ROBOT_THETA = direction;
+                            ROBOT_X_ROTATION = 0;
+                            ROBOT_Y_ROTATION = 0;
                             ROBOT_THETA_ROTATION = 0;
                             ekf_step.restart_calculation();
                             break;
 
                         }
                         else {
+                            rotation_output(); //calculate PID values
 
                             if (dir_rotation == 'L') {
                                 actuator(3, PID_ROTATION_OUTPUT_L, PID_ROTATION_OUTPUT_R);
                             }
                             else if (dir_rotation == 'R') {
                                 actuator(4, PID_ROTATION_OUTPUT_L, PID_ROTATION_OUTPUT_R);
+                            }
+                            else {
+                                // O==stop car
+                                actuator(2, PID_ROTATION_OUTPUT_L, PID_ROTATION_OUTPUT_R);
+
                             }
                         }
 
@@ -1425,7 +1456,8 @@ public:
 
 
 
-    void move_one_step(int direction, int distance, char dir_rotation, int  degrees_from_act_to_target_pos, double interval_delta_time) {
+    void move_one_step(int direction, int distance, char dir_rotation='O',
+        int  degrees_from_act_to_target_pos=0) {
         /// <summary>
         /// 
         /// </summary>
@@ -1434,9 +1466,51 @@ public:
         /// <param name="dir_rotation"> L or R</param>
         /// <param name="degrees_from_act_to_target_pos"> diff now wished direction</param>
         /// <returns></returns>
-        bool ok = rotation(direction, dir_rotation, degrees_from_act_to_target_pos, interval_delta_time);
+        /// 
+        /// 
+        ROBOT_ARRIVED = false;
+
+        double new_distance_this_step = 0;
+        ROBOT_X_ROTATION = 0;
+        ROBOT_Y_ROTATION = 0;
+        ROBOT_THETA_ROTATION = 0;
+        ekf_step.restart_calculation();
+        //dist_cm_L
+        ROBOT_LAST_TRAVELED_DISTANCE = ROBOT_CURRENT_TRAVELED_DISTANCE;
+        bool ok_ = rotation(direction, dir_rotation, degrees_from_act_to_target_pos);
+        if (ok_ == true) {
+            ROBOT_LAST_TRAVELED_DISTANCE = ROBOT_CURRENT_TRAVELED_DISTANCE;
+            ROBOT_X_ROTATION = 0;
+            ROBOT_Y_ROTATION = 0;
+            ROBOT_THETA_ROTATION = 0;
+            ekf_step.restart_calculation();
+            while (true) {
+                if (ROBOT_LAST_TRAVELED_DISTANCE == 0 and distance == 0) {
+                    new_distance_this_step = ROBOT_CURRENT_TRAVELED_DISTANCE;
+                }
+                else {
+                    new_distance_this_step =
+                        ROBOT_CURRENT_TRAVELED_DISTANCE - ROBOT_LAST_TRAVELED_DISTANCE;
+                }
+
+                if (new_distance_this_step >= distance || (distance == 0)) {
+                    //arived
+                    ROBOT_LAST_TRAVELED_DISTANCE = ROBOT_CURRENT_TRAVELED_DISTANCE;
+                    break;
+                }
+                else if (new_distance_this_step < distance) {
+                    output_straight_line(); //calculate PID straight line
+                    //move ahead
+                    actuator(1, PID_STRAIGHT_OUTPUT_L, PID_STRAIGHT_OUTPUT_R);
+                }
+            }
 
 
+
+        }
+
+        actuator(2, 0, 0); //stop the car
+        ROBOT_ARRIVED = true; //return to Jetson, that command is done
 
 
     }
@@ -1528,29 +1602,53 @@ void loop() {
     KalmanOdometry ko;//kalman odometry improve the results
     ODOMETRY_ROTATION odom_rot; // odometry rotation
     KalmanStep ks; // kalman step
+    Body body; //main class
 
     info_from_jetson();
     curTime = millis();
-    if (curTime - prevTime >= intervalTime) {
+    if (curTime - prevTime >= intervalTime) { //400 ms or less make 100ms
+        ///////// SYNCHRONISATION !!!!! /////////////////
         speed_calculation(); //1 speed calculation
         calculation_traveled_distance(); // 2 distance calculation
         batery_measuring(); // 2.1 battery update
         odom.calculation_position(rpm_L, rpm_R, speed_time_factor, ROBOT_X, ROBOT_Y, ROBOT_THETA); // full
-        odom_rot.calculation_position_rotation(rpm_L, rpm_R, speed_time_factor, 0, 0, 0); //rotation
-        Serial.print(odom.position_full[2]);
-        Serial.print(odom_rot.position_rotation[2]);
+        odom_rot.calculation_position_rotation(rpm_L, rpm_R, speed_time_factor, ROBOT_X_ROTATION, ROBOT_Y_ROTATION, ROBOT_THETA_ROTATION); //rotation
+        Serial.print("full Theta :  ");
+        Serial.println(odom.position_full[2]);
+        Serial.print("  rot Theta :  ");
+        Serial.println(odom_rot.position_rotation[2]);
 
         ko.calculation_ekf(odom.position_full, speed_time_factor, rpm_L, rpm_R);
-        Serial.print(ko.state_estimate_k_updated[2]);
+        Serial.print("  full theta after ekf  :  ");
+        Serial.println(ko.state_estimate_k_updated[2]);
+        
 
         ks.calculation_step(odom_rot.position_rotation, speed_time_factor, rpm_L, rpm_R);
-        Serial.print(ks.state_estimate_k_updated_step[2]);
+        Serial.print("  rot theta after ekf  :  ");
+        Serial.println(ks.state_estimate_k_updated_step[2]);
 
-
-
-        prevTime = curTime;   // store time value as prev
+        prevTime = curTime;   // update the time 
 
     }
+
+    // run robot with command from Jetson
+    
+    //body.move_one_step(TARGET_ORIENTATION_JETSON, DISTANCE_JETSON, DIRECTION, DIFFERENCE_ANGLE_JETSON);
+    if (ROBOT_ARRIVED == false) {
+        body.move_one_step(0, 20); // (deg,dist,L/R,diff)
+    }
+
+
+    /////////////////////// DEBUG HERE ////////////////////////////////////////////// 
+
+    Serial.print(" X: ");
+    Serial.print(ROBOT_X);
+    Serial.print("  Y: ");
+    Serial.print(ROBOT_Y);
+    Serial.print("  Theta deg: ");
+    Serial.print(ROBOT_THETA * rad_to_deg);
+    Serial.println();
+
 
 
   
@@ -1559,7 +1657,7 @@ void loop() {
 
 
 
-/////////////////////// DEBUG HERE //////////////////////////////////////////////
+
 
 
 
@@ -1661,7 +1759,8 @@ void batery_measuring() {
         if (battery > 0) {
             if (battery > upper_bat_range) { battery = upper_bat_range; }
             if (battery < low_bat_range) { battery = low_bat_range; }
-            bat_factor_pid = map(battery, 760, 870, 40, 0); //12.54-11V //for motors
+            //bat_factor_pid = map(battery, 760, 870, 40, 0); //12.54-11V //for motors
+            bat_factor_pid = map(battery, 760, 870, 17, 0); //12.54-11V //for motors
             // BAT_percent calculation
             BAT_percent = map(battery, 670, 845, 0, 100); //10.00 - 12.54 V //battery=(V*204.6)/ 3.0423
             if (BAT < 9) { BAT_percent = 0; }
@@ -1697,11 +1796,12 @@ void string_to_array(char msg[]) {
 
 
 void sendData() {
-    /// send data to Jetson nano [x,y,theta,bat,T]
+    /// send data to Jetson nano [x(double),y(double),theta(deg,double),bat(double), arrived(0/1),T]
     String outString = String(ROBOT_X) + String("|")
         + String(ROBOT_Y) + String("|") +
-        String(ROBOT_THETA) + String("|") +
-        String(BAT) + String('T');
+        String((ROBOT_THETA * rad_to_deg)) + String("|") +
+        String(BAT) + String("|")  + 
+        String(ROBOT_ARRIVED) + String('T');
 
     int len = outString.length() + 1;
     char ascii_num[len];
@@ -1714,8 +1814,12 @@ void sendData() {
 
 void calculation_traveled_distance() {
     /// calcualtion the distance and store it into  dist_cm_L and dist_cm_R
+    //ROBOT_CURRENT_TRAVELED_DISTANCE 
+    //ROBOT_LAST_TRAVELED_DISTANCE 
     dist_cm_L = ((sum_pulses_L / leftRev) * wheel_round);
     dist_cm_R = ((sum_pulses_R / rightRev) * wheel_round);
+
+    ROBOT_CURRENT_TRAVELED_DISTANCE = (dist_cm_L + dist_cm_R) / 2;
 }
 
 void speed_calculation() {
@@ -1788,18 +1892,18 @@ void output_straight_line() {
     if (ROBOT_THETA_ROTATION == 0) {
         final_speed_l = SPEED_L_target;
         final_speed_r = SPEED_R_target;
-
+        
     }
 
     else if (ROBOT_THETA_ROTATION < 0) {
-        final_speed_l = SPEED_L_target - theta_pid_output_l;
-        final_speed_r = SPEED_R_target + theta_pid_output_r;
+        final_speed_l = SPEED_L_target - abs(theta_pid_output_l);
+        final_speed_r = SPEED_R_target + abs(theta_pid_output_r);
 
     }
 
     else if (ROBOT_THETA_ROTATION > 0) {
-        final_speed_l = SPEED_L_target + theta_pid_output_l;
-        final_speed_r = SPEED_R_target - theta_pid_output_r;
+        final_speed_l = SPEED_L_target + abs(theta_pid_output_l);
+        final_speed_r = SPEED_R_target - abs(theta_pid_output_r);
 
     }
 
