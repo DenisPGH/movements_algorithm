@@ -144,6 +144,7 @@
   <ItemGroup>
     <ClInclude Include="14_02_23.h" />
     <ClInclude Include="15_02_23.h" />
+    <ClInclude Include="17_02_23.h" />
     <ClInclude Include="Arduino.h" />
     <ClInclude Include="Graph_helper.h" />
     <ClInclude Include="helper_odometry_class.h" />
