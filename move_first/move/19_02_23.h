@@ -1,9 +1,11 @@
 double ROBOT_X = 0; //main vaiable
 double ROBOT_Y = 0;//main vaiable
 double ROBOT_THETA = 0; //radians main vaiable 
-double ROBOT_THETA_ROTATION = 0; // radians //main vaiable
+
 double ROBOT_X_ROTATION = 0; // 
 double ROBOT_Y_ROTATION = 0; // 
+double ROBOT_THETA_ROTATION = 0; // radians //main vaiable
+
 double TARGET_ANGLE_ROTATION = 0; // main variable
 
 double ROBOT_X_STEP = 0; //main vaiable
@@ -162,7 +164,7 @@ double setpoint_rot_L = TARGET_ANGLE_ROTATION;
 double setpoint_rot_R = TARGET_ANGLE_ROTATION;
 double CURRENT_THETA_DEG = 0;
 
-double test_speed_rotation = ROBOT_THETA_ROTATION * deg_to_rad;
+double test_speed_rotation = ROBOT_THETA_STEP * deg_to_rad;
 
 PID ROTATION_PID_L(&test_speed_rotation, &PID_ROTATION_OUTPUT_L, &setpoint_rot_L, Kp_L_rot, Ki_L_rot, Kd_L_rot, DIRECT);
 PID ROTATION_PID_R(&test_speed_rotation, &PID_ROTATION_OUTPUT_R, &setpoint_rot_R, Kp_R_rot, Ki_R_rot, Kd_R_rot, DIRECT);
@@ -1297,7 +1299,7 @@ public:
     }
 
 
-    void restart_calculation() {
+    void restart_calculation_rotation() {
       
 
         for (int i = 0; i < N; i++) {
@@ -1350,7 +1352,7 @@ public:
     }
 
 
-    double position_rotation[3]{ 0,0,0 }; //use this in roatation
+    double position_rotation_step[3]{ 0,0,0 }; //use this in roatation
     void calculation_position_step(double vel_l, double vel_r,
         double delta_time, double curr_x, double curr_y, double curr_theta) {
         /// <summary>
@@ -1404,9 +1406,9 @@ public:
 
 
 
-        position_rotation[0] = result[0] + B[0];
-        position_rotation[1] = result[1] + B[1];
-        position_rotation[2] = result[2] + B[2];
+        position_rotation_step[0] = result[0] + B[0];
+        position_rotation_step[1] = result[1] + B[1];
+        position_rotation_step[2] = result[2] + B[2];
 
 
         //Serial.print("position_rotation[2] : ");
@@ -1459,9 +1461,9 @@ public:
     double SENSOR_NOICE_THETA = 0.0027;  //  + 0.0026, -0.004 which direction make noise
 
     // estimation state, where the robot start
-    double ESTIMATET_STATE_LAST_X = ROBOT_X_ROTATION;
-    double ESTIMATET_STATE_LAST_Y = ROBOT_Y_ROTATION;
-    double ESTIMATET_STATE_LAST_THETA = ROBOT_THETA_ROTATION; //radians
+    double ESTIMATET_STATE_LAST_X = ROBOT_X_STEP;
+    double ESTIMATET_STATE_LAST_Y = ROBOT_Y_STEP;
+    double ESTIMATET_STATE_LAST_THETA = ROBOT_THETA_STEP; //radians
     double state_estimate_k_minus_1[3] = { ESTIMATET_STATE_LAST_X,
         ESTIMATET_STATE_LAST_Y,
         ESTIMATET_STATE_LAST_THETA }; // [meters, meters, radians]
@@ -1488,7 +1490,6 @@ public:
 
 class KalmanSTEP : public KalmanVariablesSTEP {
     double control_vector_k_minus_1[3] = { 0, 0, CONTROL_YAW_RATE };
-    double control_vector_k_minus_1_step[3] = { 0, 0, CONTROL_YAW_RATE };
     double A_k_minus_1[3][3] = {
                 {STATE_CHANGES_X, 0, 0},
                 { 0, STATE_CHANGES_Y, 0},
@@ -1514,6 +1515,9 @@ class KalmanSTEP : public KalmanVariablesSTEP {
 
     double R_matrix[3][3];
     double prediction_ekf[3] = { 0,0,0 };
+
+    double final_P_k[3][3] = { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };
+    double state_estimate_k_updated_step[3] = { 0,0,0 };
 
 
 
@@ -1808,8 +1812,7 @@ private:
 
 public:
     // after ekf 
-    double final_P_k[3][3] = { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };
-    double state_estimate_k_updated_step[3] = { 0,0,0 };
+   
 
     void calculation_step_2(double(&z_k)[3], double dt_rr, double V_l, double V_r) {
         double control_vector_k_minus_1_re[3] = { V_l, V_r,CONTROL_YAW_RATE }; // [rpm, rpm, rad / sec]
@@ -1960,7 +1963,7 @@ public:
                     }
                 }
 
-                else {
+                else { // need change for 180 deg
                     for (int i = 0; i < delimo; i++) {
                         separated_degrees_if_more_than_90[i] = step_;
                         int rest = degrees_from_act_to_target_pos % step_;
@@ -1987,7 +1990,7 @@ public:
                             calculation_traveled_distance(); // 2 distance calculation
                             batery_measuring(); // 2.1 battery update
                             odo_step.calculation_position_step(rpm_L, rpm_R, speed_time_factor, ROBOT_X_STEP, ROBOT_Y_STEP, ROBOT_THETA_STEP); //rotation             
-                            ekf_step.calculation_step_2(odo_rot.position_rotation, speed_time_factor, rpm_L, rpm_R);
+                            ekf_step.calculation_step_2(odo_step.position_rotation_step, speed_time_factor, rpm_L, rpm_R);
                             //Serial.print("  rot theta after ekf  :  ");
                             //Serial.println(ekf_step.state_estimate_k_updated_step[2]);
                             
@@ -1997,7 +2000,10 @@ public:
                         double current_angle_deg_ekf = ROBOT_THETA_STEP *rad_to_deg; //degrees
                                                
                         if (current_angle_deg_ekf>= (angle)) {                            
-                            ROBOT_THETA = direction_ * deg_to_rad;                            
+                            ROBOT_THETA = direction_ * deg_to_rad;    
+                            ROBOT_X = ROBOT_X_STEP;
+                            ROBOT_Y = ROBOT_Y_STEP;
+
                             ROBOT_X_STEP = 0;
                             ROBOT_Y_STEP = 0;
                             ROBOT_THETA_STEP = 0;
@@ -2071,7 +2077,7 @@ public:
             ROBOT_X_ROTATION = 0;
             ROBOT_Y_ROTATION = 0;
             ROBOT_THETA_ROTATION = 0;
-            ekf_step.restart_calculation();           
+            ekf_rot.restart_calculation_rotation();           
             while (true) {
                 curTime = millis();
                 if (curTime - prevTime >= intervalTime) { //400 ms or less make 100ms
