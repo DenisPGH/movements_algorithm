@@ -21,13 +21,13 @@ bool ROBOT_ARRIVED = false;
 const int MIN_L = 27; //30
 const int MIN_R = 30; //30
 
-const double Kp_L_theta = 30; // # 1.9
-const double Ki_L_theta = 100; //  # 0
-const double Kd_L_theta = 1; // # 0
+const double Kp_L_theta = 28; // # 28
+const double Ki_L_theta = 100; //  # 10
+const double Kd_L_theta = 0.2; // # 0.2
 
-const double Kp_R_theta = 30; // # 1.9
-const double Ki_R_theta = 100; // # 0
-const double Kd_R_theta = 1; // # 0
+const double Kp_R_theta = 35; // # 28
+const double Ki_R_theta = 200; // # 10
+const double Kd_R_theta = 0.9; // # 0.2
 
 const double Kp_L = 2.9; // # 10.62
 const double Ki_L = 0; // # 0
@@ -37,11 +37,11 @@ const double Kp_R = 2.9; // # 9.2
 const double Ki_R = 0; //  # 0
 const double Kd_R = 0; // # 0
 
-const double Kp_L_rot = 2.9; // # 10.62
+const double Kp_L_rot = 2.9; // # 2.9
 const double Ki_L_rot = 0; // # 0
 const double Kd_L_rot = 0; // # 0
 
-const double Kp_R_rot = 2.9; // # 9.2
+const double Kp_R_rot = 2.9; // # 2.9
 const double Ki_R_rot = 0; //  # 0
 const double Kd_R_rot = 0; // # 0
 
@@ -67,7 +67,7 @@ unsigned long start = 0;
 
 
 
-unsigned long intervalTime = 400; //dt=0.4 ms
+unsigned long intervalTime = 400; //400, dt=0.4 ms
 double speed_time_factor = 0.4; //0.4
 
 const int DIR_AHEAD = 1;
@@ -106,8 +106,9 @@ double ang_velocity_deg_L = 0;
 double ang_velocity_R = 0;
 double ang_velocity_deg_R = 0;
 
-const float rpm_to_radians = 0.10471975512;
-const float rad_to_deg = 57.2957795; // 57.2957795
+const double rpm_to_radians = 0.10471975512;
+const double rad_to_deg = 57.2957795; // 57.2957795
+const double deg_to_rad = 0.0174532925; // 0.0174532925
 
 const float Pi = 3.141592653589793;
 
@@ -152,17 +153,18 @@ double  PID_ROTATION_OUTPUT_R = 0;
 
 
 
-double setpoint_rot_L = 0;
-double setpoint_rot_R = 0;
+double setpoint_rot_L = TARGET_ANGLE_ROTATION;
+double setpoint_rot_R = TARGET_ANGLE_ROTATION;
+double CURRENT_THETA_DEG = 0;
 
-PID ROTATION_PID_L(&TARGET_ANGLE_ROTATION, &PID_ROTATION_OUTPUT_L, &setpoint_rot_L, Kp_L_rot, Ki_L_rot, Kd_L_rot, DIRECT);
-PID ROTATION_PID_R(&TARGET_ANGLE_ROTATION, &PID_ROTATION_OUTPUT_R, &setpoint_rot_R, Kp_R_rot, Ki_R_rot, Kd_R_rot, DIRECT);
+PID ROTATION_PID_L(&CURRENT_THETA_DEG, &PID_ROTATION_OUTPUT_L, &setpoint_rot_L, Kp_L_rot, Ki_L_rot, Kd_L_rot, DIRECT);
+PID ROTATION_PID_R(&CURRENT_THETA_DEG, &PID_ROTATION_OUTPUT_R, &setpoint_rot_R, Kp_R_rot, Ki_R_rot, Kd_R_rot, DIRECT);
+
+
 
 
 PID THETA_PID_L(&ROBOT_THETA_ROTATION, &theta_pid_output_l, &setpoint_theta, Kp_L_theta, Ki_L_theta, Kd_L_theta, DIRECT);
 PID THETA_PID_R(&ROBOT_THETA_ROTATION, &theta_pid_output_r, &setpoint_theta, Kp_R_theta, Ki_R_theta, Kd_R_theta, DIRECT);
-
-
 PID STRAIGHT_SPEED_PID_L(&rpm_L, &PID_STRAIGHT_OUTPUT_L, &final_speed_l, Kp_L, Ki_L, Kd_L, DIRECT);
 PID STRAIGHT_SPEED_PID_R(&rpm_R, &PID_STRAIGHT_OUTPUT_R, &final_speed_r, Kp_R, Ki_R, Kd_R, DIRECT);
 
@@ -464,6 +466,7 @@ public:
 
 };
 
+
 /////////////////////////// ODOMETRY CLASS STOP/////////////////////////////////////////////////////////
 //////////////////////////  KALMAN STEP START ////////////////////////////////////////////////////////////
 class KalmanVariablesStep {
@@ -501,9 +504,9 @@ public:
     double SENSOR_NOICE_THETA = 0.0027;  //  + 0.0026, -0.004 which direction make noise
 
     // estimation state, where the robot start
-    double ESTIMATET_STATE_LAST_X = 0;
-    double ESTIMATET_STATE_LAST_Y = 0;
-    double ESTIMATET_STATE_LAST_THETA = 0.0; //radians
+    double ESTIMATET_STATE_LAST_X = ROBOT_X_ROTATION;
+    double ESTIMATET_STATE_LAST_Y = ROBOT_Y_ROTATION;
+    double ESTIMATET_STATE_LAST_THETA = ROBOT_THETA_ROTATION; //radians
     double state_estimate_k_minus_1[3] = { ESTIMATET_STATE_LAST_X,
         ESTIMATET_STATE_LAST_Y,
         ESTIMATET_STATE_LAST_THETA }; // [meters, meters, radians]
@@ -696,16 +699,16 @@ private:
 
 
 
-    void get_B(double control_vector_k_minus_1[3],
-        double state_estimate_k_minus_1[3], double dt) {
+    void get_B(double control_vector_k_minus_1_r[3],
+        double state_estimate_k_minus_1_r[3], double dt_r) {
         /*  :param control_vector_k_minus_1 : [rpm, rpm, rad / sec]
             : param state_estimate_k_minus_1 : [cm, cm, rad]
             : return : prediction in world frame
             """*/
 
-        double vel_l = control_vector_k_minus_1[0] * rpm_to_radians;
-        double vel_r = control_vector_k_minus_1[1] * rpm_to_radians;
-        double omega = (((vel_l - vel_r) / (WIDTH_CAR)) * RADIUS_WHEEL) * dt;
+        double vel_l = control_vector_k_minus_1_r[0] * rpm_to_radians;
+        double vel_r = control_vector_k_minus_1_r[1] * rpm_to_radians;
+        double omega = (((vel_l - vel_r) / (WIDTH_CAR)) * RADIUS_WHEEL) * dt_r;
         double R = 0;
         if (vel_l != vel_r) {
             R = WIDTH_CAR / 2.0 * ((vel_r + vel_l) / (vel_l - vel_r));
@@ -713,17 +716,17 @@ private:
         else { R = 0.0; }
 
 
-        double ICC_x = state_estimate_k_minus_1[0] - R * sin(state_estimate_k_minus_1[2]);
-        double ICC_y = state_estimate_k_minus_1[1] + R * cos(state_estimate_k_minus_1[2]);
+        double ICC_x = state_estimate_k_minus_1_r[0] - R * sin(state_estimate_k_minus_1_r[2]);
+        double ICC_y = state_estimate_k_minus_1_r[1] + R * cos(state_estimate_k_minus_1_r[2]);
 
         double R_matrix[3][3] = { {cos(omega), -sin(omega), 0},
                                  {sin(omega), cos(omega), 0},
                                  {0, 0, 1},
         };
 
-        double A[3] = { state_estimate_k_minus_1[0] - ICC_x,
-                        state_estimate_k_minus_1[1] - ICC_y,
-                            state_estimate_k_minus_1[2] };
+        double A[3] = { state_estimate_k_minus_1_r[0] - ICC_x,
+                        state_estimate_k_minus_1_r[1] - ICC_y,
+                            state_estimate_k_minus_1_r[2] };
 
         double B[3] = { ICC_x, ICC_y, omega };
 
@@ -750,17 +753,17 @@ private:
 
 
 
-    void ekf(double(&z_k_observation_vector)[3],
-        double state_estimate_k_minus_1[3],
-        double control_vector_k_minus_1[3],
-        double(&P_k_minus_1)[3][3],
-        double dk) {
+    void ekf(double(&z_k_observation_vector_re)[3],
+        double (&state_estimate_k_minus_1_re)[3],
+        double control_vector_k_minus_1_re[3],
+        double(&P_k_minus_1_re)[3][3],
+        double dk_re) {
 
         //print_3x1_matrix(z_k_observation_vector);
 
         ////// PREDICT /////////////////////////
         double state_estimate_k_prediction[3] = { 0,0,0 };
-        get_B(control_vector_k_minus_1, state_estimate_k_minus_1, dk);
+        get_B(control_vector_k_minus_1_re, state_estimate_k_minus_1_re, dk_re);
         for (int i = 0; i < 3; i++) {
             state_estimate_k_prediction[i] = prediction_ekf[i] +
                 process_noise_v_k_minus_1[i];
@@ -789,7 +792,7 @@ private:
         multiply_3x3__and_3x1_(H_k, state_estimate_k_prediction, meas_res_1);
         sum_two_matrices_3x1_3x1(meas_res_1, sensor_noise_w_k, measurement_residual_y_k_1);
         double measurement_residual_y_k[3] = { 0,0,0 };
-        subtract_two_matrices_3x1__3x1(z_k_observation_vector, measurement_residual_y_k_1, measurement_residual_y_k);
+        subtract_two_matrices_3x1__3x1(z_k_observation_vector_re, measurement_residual_y_k_1, measurement_residual_y_k);
 
 
         //print_3x1_matrix(measurement_residual_y_k);
@@ -838,6 +841,13 @@ private:
         // Return the updated state and covariance estimates
         // return state_estimate_k_updated, P_k //out of this scope
 
+        assume_matrix_3x1(state_estimate_k_updated_step, state_estimate_k_minus_1_re);
+        assume_matrix_3x3(final_P_k, P_k_minus_1_re);
+
+        ROBOT_X_ROTATION = state_estimate_k_minus_1_re[0];
+        ROBOT_Y_ROTATION = state_estimate_k_minus_1_re[1];
+        ROBOT_THETA_ROTATION = state_estimate_k_minus_1_re[2];
+
     }
 
 
@@ -846,33 +856,30 @@ public:
     double final_P_k[3][3] = { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };
     double state_estimate_k_updated_step[3] = { 0,0,0 };
 
-    void calculation_step(double(&z_k)[3], double dt, double V_l, double V_r) {
-        double control_vector_k_minus_1[3] = { V_l, V_r,CONTROL_YAW_RATE }; // [rpm, rpm, rad / sec]
+    void calculation_step(double(&z_k)[3], double dt_rr, double V_l, double V_r) {
+        double control_vector_k_minus_1_re[3] = { V_l, V_r,CONTROL_YAW_RATE }; // [rpm, rpm, rad / sec]
 
         //calculate into final_P_k ,state_estimate_k_updated
-        ekf(z_k, state_estimate_k_minus_1, control_vector_k_minus_1,
-            P_k_minus_1, dt);
+        if (V_l != 0 || V_r != 0) {
+            ekf(z_k, state_estimate_k_minus_1, control_vector_k_minus_1_re,
+                P_k_minus_1, dt_rr);
+
+        }
+        
 
         //update 
         //state_estimate_k_minus_1 = state_estimate_k_updated
          //P_k_minus_1 = final_P_k
-        assume_matrix_3x1(state_estimate_k_updated_step, state_estimate_k_minus_1);
-        assume_matrix_3x3(final_P_k, P_k_minus_1);
-
-        ROBOT_X_ROTATION = state_estimate_k_updated_step[0];
-        ROBOT_Y_ROTATION = state_estimate_k_updated_step[1];
-        ROBOT_THETA_ROTATION = state_estimate_k_updated_step[2];
+        
 
     }
 
 
     void restart_calculation() {
-        double reset_state_estimate_k_minus_1[3] = { ESTIMATET_STATE_LAST_X,
-            ESTIMATET_STATE_LAST_Y,
-            ESTIMATET_STATE_LAST_THETA };
+      
 
         for (int i = 0; i < N; i++) {
-            state_estimate_k_minus_1[i] = reset_state_estimate_k_minus_1[i];
+            state_estimate_k_minus_1[i] =0;
         }
         double  reset_P_k_minus_1[3][3] = { { ACCURACY_STATE_X, 0, 0 },
              {0, ACCURACY_STATE_Y, 0},
@@ -883,6 +890,10 @@ public:
                 P_k_minus_1[i][j] = reset_P_k_minus_1[i][j];
             }
         }
+
+        ROBOT_THETA_ROTATION = 0;
+        ROBOT_X_ROTATION = 0;
+        ROBOT_Y_ROTATION = 0;
     }
 
 
@@ -1320,6 +1331,8 @@ void actuator(int mode_, double pwm_l = 0, double pwm_r = 0) {
         direktion_L = DIR_STOP; direktion_R = DIR_STOP;
         moving_PWM(0, 0); MIN_ABSOLUTE_SPEED_L = 0; MIN_ABSOLUTE_SPEED_R = 0;
         ang_velocity_L = 0; ang_velocity_R = 0; rpm_L = 0; rpm_R = 0;
+        bat_factor_pid = 0;
+        Serial.println("stop the car");
 
     }
 
@@ -1328,7 +1341,7 @@ void actuator(int mode_, double pwm_l = 0, double pwm_r = 0) {
         direktion_L = DIR_BACK; direktion_R = DIR_AHEAD;
         MIN_ABSOLUTE_SPEED_L = MIN_L; MIN_ABSOLUTE_SPEED_R = MIN_R;
         moving_PWM(pwm_l, pwm_r);
-        Serial.println("stop the car");
+        
     }
     // TURN RIGHT 
     else if (mode_ == 4) {
@@ -1356,11 +1369,13 @@ void actuator(int mode_, double pwm_l = 0, double pwm_r = 0) {
 class BODY {
     ODOMETRY odo;
     KalmanOdometry ekf_b;
-    KalmanStep ekf_step;
+
     ODOMETRY_ROTATION odo_rot;
-    double delta_time = 0;
-    double rad_to_deg = 57.29578;
-    double last_time = 0;
+    KalmanStep ekf_step;
+    
+    //double delta_time = 0;
+    //double rad_to_deg = 57.29578;
+    //double last_time = 0;
 
 
 public:
@@ -1389,15 +1404,16 @@ public:
                 //// step 30 degrees [90,90,3]
                 int step_ = 90;
                 int delimo = degrees_from_act_to_target_pos / step_;
+
                 if ((degrees_from_act_to_target_pos % step_) == 0) {
-                    for (int i = 0; i <= delimo; i++) {
+                    for (int i = 0; i <delimo; i++) {
                         //separated_degrees_if_more_than_90.push_back(step);
                         separated_degrees_if_more_than_90[i] = step_;
                     }
                 }
 
                 else {
-                    for (int i = 0; i <= delimo; i++) {
+                    for (int i = 0; i < delimo; i++) {
                         separated_degrees_if_more_than_90[i] = step_;
                         int rest = degrees_from_act_to_target_pos % step_;
                         separated_degrees_if_more_than_90[i + 1] = rest;
@@ -1406,6 +1422,7 @@ public:
                 }
                 //////
                 for (auto angle : separated_degrees_if_more_than_90) {
+                    
                     ROBOT_X_ROTATION = 0;
                     ROBOT_Y_ROTATION = 0;
                     ROBOT_THETA_ROTATION = 0;
@@ -1425,29 +1442,30 @@ public:
                             ekf_step.calculation_step(odo_rot.position_rotation, speed_time_factor, rpm_L, rpm_R);
                             //Serial.print("  rot theta after ekf  :  ");
                             //Serial.println(ekf_step.state_estimate_k_updated_step[2]);
+                            
                             prevTime = curTime;
 
-                        }
-
-                        double error_range = 0.5;
-                        double coefficient_slow = 1; //1.31
-                        double pid_coefficient_low_angle = 30;
-                        double current_angle_deg_ekf =
-                            ekf_step.state_estimate_k_updated_step[2]; //new values of theta
-
-
-                        if (current_angle_deg_ekf * coefficient_slow >= (angle)) {
-                            //actual_theta = direction;
-                            ROBOT_THETA = direction_;
+                        }                       
+                        double current_angle_deg_ekf = ROBOT_THETA_ROTATION *rad_to_deg; //degrees
+                                               
+                        if (current_angle_deg_ekf>= (angle)) {                            
+                            ROBOT_THETA = direction_ * deg_to_rad;                            
                             ROBOT_X_ROTATION = 0;
                             ROBOT_Y_ROTATION = 0;
                             ROBOT_THETA_ROTATION = 0;
                             ekf_step.restart_calculation();
+                            actuator(2, 0, 0);
                             break;
 
                         }
-                        else {
+                        else {      
+                            TARGET_ANGLE_ROTATION = angle ;
+                            CURRENT_THETA_DEG = current_angle_deg_ekf;
                             rotation_output(); //calculate PID values
+                            Serial.print("L : ");
+                            Serial.print(PID_ROTATION_OUTPUT_L);
+                            Serial.print("  R : ");
+                            Serial.println(PID_ROTATION_OUTPUT_R);
 
                             if (dir_rotation == 'L') {
                                 actuator(3, PID_ROTATION_OUTPUT_L, PID_ROTATION_OUTPUT_R);
@@ -1455,11 +1473,7 @@ public:
                             else if (dir_rotation == 'R') {
                                 actuator(4, PID_ROTATION_OUTPUT_L, PID_ROTATION_OUTPUT_R);
                             }
-                            else {
-                                // O==stop car
-                                actuator(2, PID_ROTATION_OUTPUT_L, PID_ROTATION_OUTPUT_R);
-
-                            }
+                            
                         }
                     }
 
@@ -1501,11 +1515,11 @@ public:
         ROBOT_LAST_TRAVELED_DISTANCE = ROBOT_CURRENT_TRAVELED_DISTANCE;
         bool ok_ = rotation(direction_, dir_rotation, degrees_from_act_to_target_pos);
         if (ok_ == true) {
-            ROBOT_LAST_TRAVELED_DISTANCE = ROBOT_CURRENT_TRAVELED_DISTANCE;
+            ROBOT_LAST_TRAVELED_DISTANCE = ROBOT_CURRENT_TRAVELED_DISTANCE;            
             ROBOT_X_ROTATION = 0;
             ROBOT_Y_ROTATION = 0;
             ROBOT_THETA_ROTATION = 0;
-            ekf_step.restart_calculation();
+            ekf_step.restart_calculation();           
             while (true) {
                 curTime = millis();
                 if (curTime - prevTime >= intervalTime) { //400 ms or less make 100ms
@@ -1516,44 +1530,45 @@ public:
                     batery_measuring(); // 2.1 battery update
                     odo.calculation_position(rpm_L, rpm_R, speed_time_factor, ROBOT_X, ROBOT_Y, ROBOT_THETA); // full                
                     ekf_b.calculation_ekf(odo.position_full, speed_time_factor, rpm_L, rpm_R);
+                    
+                    odo_rot.calculation_position_rotation(rpm_L, rpm_R, speed_time_factor, ROBOT_X_ROTATION, ROBOT_Y_ROTATION, ROBOT_THETA_ROTATION); //rotation             
+                    ekf_step.calculation_step(odo_rot.position_rotation, speed_time_factor, rpm_L, rpm_R);
+                    
                     prevTime = curTime;   // update the time 
 
-                }
 
-                if (ROBOT_LAST_TRAVELED_DISTANCE == 0 and distance == 0) {
-                    new_distance_this_step = ROBOT_CURRENT_TRAVELED_DISTANCE;
-                }
-                else {
-                    new_distance_this_step =
-                        ROBOT_CURRENT_TRAVELED_DISTANCE - ROBOT_LAST_TRAVELED_DISTANCE;
-                }
+                    if (ROBOT_LAST_TRAVELED_DISTANCE == 0 and distance == 0) {
+                        new_distance_this_step = ROBOT_CURRENT_TRAVELED_DISTANCE;
+                    }
+                    else {
+                        new_distance_this_step =
+                            ROBOT_CURRENT_TRAVELED_DISTANCE - ROBOT_LAST_TRAVELED_DISTANCE;
+                    }
+                    //Serial.print("new dist: ");
+                   // Serial.println(new_distance_this_step);
 
-                if (new_distance_this_step >= distance || (distance == 0)) {
-                    //arived
-                    ROBOT_LAST_TRAVELED_DISTANCE = ROBOT_CURRENT_TRAVELED_DISTANCE;
-                    actuator(2, 0, 0); //stop the car
-                    break;
-                }
-                else if (new_distance_this_step < distance) {
-                    output_straight_line(); //calculate PID straight line
-                    //move ahead                  
-                   /* Serial.print(" pid l :  ");
-                    Serial.print(rpm_L);
-                    Serial.print(" pid r :  ");
-                    Serial.println(rpm_R);*/
+                    if (new_distance_this_step >= distance || (distance == 0)) {
+                        //arived
+                        ROBOT_LAST_TRAVELED_DISTANCE = ROBOT_CURRENT_TRAVELED_DISTANCE;
+                        actuator(2, 0, 0); //stop the car
+                        break;
+                    }
+                    else if (new_distance_this_step < distance) {
+                        output_straight_line(); //calculate PID straight line  
+                        Serial.print("teta deg : ");
+                        Serial.println(ROBOT_THETA_ROTATION * rad_to_deg);
+                        actuator(1, PID_STRAIGHT_OUTPUT_L, PID_STRAIGHT_OUTPUT_R);
+                    }
 
-                    actuator(1, PID_STRAIGHT_OUTPUT_L, PID_STRAIGHT_OUTPUT_R);
                 }
-
+             
             }
-
-
-
 
         }
 
         actuator(2, 0, 0); //stop the car
         ROBOT_ARRIVED = true; //return to Jetson, that command is done
+        //update main variables
 
 
     }
@@ -1686,19 +1701,35 @@ void loop() {
     //}
 
     // run robot with command from Jetson
-    //BODY bod; //main class
+    BODY bod; //main class
     ////bod.move_one_step(TARGET_ORIENTATION_JETSON, DISTANCE_JETSON, DIRECTION, DIFFERENCE_ANGLE_JETSON);
-    //if (ROBOT_ARRIVED == false) {
-    //    bod.move_one_step(90, 30,'R',90); // (deg,dist,L/R,diff)
-    //    Serial.println("ARRIVED");
-    //    Serial.print(" X: ");
-    //    Serial.print(ROBOT_X);
-    //    Serial.print("  Y: ");
-    //    Serial.print(ROBOT_Y);
-    //    Serial.print("  Theta deg: ");
-    //    Serial.print(ROBOT_THETA * rad_to_deg);
-    //    Serial.println();
-    //}
+    if (ROBOT_ARRIVED == false) {
+        bod.move_one_step(0, 100,'R',0); // (deg,dist,L/R,diff)
+        Serial.print(" X: ");
+        Serial.print(ROBOT_X);
+        Serial.print("  Y: ");
+        Serial.print(ROBOT_Y);
+        Serial.print("  Theta deg: ");
+        Serial.print(ROBOT_THETA * rad_to_deg);
+        Serial.println();
+
+        Serial.print(" BAT: ");
+        Serial.print(BAT);
+
+        
+
+
+        //ROBOT_ARRIVED = false;
+        //bod.move_one_step(0, 20,'R',0); // (deg,dist,L/R,diff)
+        //Serial.print(" X: ");
+        //Serial.print(ROBOT_X);
+        //Serial.print("  Y: ");
+        //Serial.print(ROBOT_Y);
+        //Serial.print("  Theta deg: ");
+        //Serial.print(ROBOT_THETA * rad_to_deg);
+        //Serial.println();
+    }
+    //actuator(2, 0, 0);
 
 
     /////////////////////// DEBUG HERE ////////////////////////////////////////////// 
@@ -1707,56 +1738,56 @@ void loop() {
 
     //actuator(1, 40, 40);
 
-    ODOMETRY odom;// 3 odometry full
-    KalmanOdometry ko;//kalman odometry improve the results
+    //ODOMETRY odom;// 3 odometry full
+    //KalmanOdometry ko;//kalman odometry improve the results
     //ODOMETRY_ROTATION odom_rot; // odometry rotation
     //KalmanStep ks; // kalman step
 
 
-    info_from_jetson();
-    curTime = millis();
-    if (curTime - prevTime >= intervalTime) { //400 ms or less make 100ms
-        ///////// SYNCHRONISATION !!!!! /////////////////
-        speed_calculation(); //1 speed calculation
-        calculation_traveled_distance(); // 2 distance calculation
-        batery_measuring(); // 2.1 battery update
-        
-        //odom_rot.calculation_position_rotation(rpm_L, rpm_R, speed_time_factor, ROBOT_X_ROTATION, ROBOT_Y_ROTATION, ROBOT_THETA_ROTATION); //rotation
-        //Serial.print("Theta :  ");
-        //Serial.println(odom.position_full[2]);
-        //Serial.print("  rot Theta :  ");
-        //Serial.println(odom_rot.position_rotation[2]);
-        //double a[3] = { ROBOT_X, ROBOT_Y, ROBOT_THETA };
-        odom.calculation_position(rpm_L, rpm_R, speed_time_factor, ROBOT_X, ROBOT_Y, ROBOT_THETA); // full
-        Serial.print(" X: ");
-        Serial.print(odom.position_full[0]);
-        Serial.print("  Y: ");
-        Serial.print(odom.position_full[1]);
-        Serial.print("  Theta deg: ");
-        Serial.print(odom.position_full[2] * rad_to_deg);
-        Serial.println();
+    //info_from_jetson();
+    //curTime = millis();
+    //if (curTime - prevTime >= intervalTime) { //400 ms or less make 100ms
+    //    ///////// SYNCHRONISATION !!!!! /////////////////
+    //    speed_calculation(); //1 speed calculation
+    //    calculation_traveled_distance(); // 2 distance calculation
+    //    batery_measuring(); // 2.1 battery update
+    //    
+    //    //odom_rot.calculation_position_rotation(rpm_L, rpm_R, speed_time_factor, ROBOT_X_ROTATION, ROBOT_Y_ROTATION, ROBOT_THETA_ROTATION); //rotation
+    //    //Serial.print("Theta :  ");
+    //    //Serial.println(odom.position_full[2]);
+    //    //Serial.print("  rot Theta :  ");
+    //    //Serial.println(odom_rot.position_rotation[2]);
+    //    //double a[3] = { ROBOT_X, ROBOT_Y, ROBOT_THETA };
+    //    odom.calculation_position(rpm_L, rpm_R, speed_time_factor, ROBOT_X, ROBOT_Y, ROBOT_THETA); // full
+    //    Serial.print(" X: ");
+    //    Serial.print(odom.position_full[0]);
+    //    Serial.print("  Y: ");
+    //    Serial.print(odom.position_full[1]);
+    //    Serial.print("  Theta deg: ");
+    //    Serial.print(odom.position_full[2] * rad_to_deg);
+    //    Serial.println();
 
-        ko.calculation_ekf(odom.position_full, speed_time_factor, rpm_L, rpm_R);
-        Serial.print("ekf X: ");
-        Serial.print(ROBOT_X);
-        Serial.print("  Y: ");
-        Serial.print(ROBOT_Y);
-        Serial.print("  Theta deg: ");
-        Serial.print(ROBOT_THETA * rad_to_deg);
-        Serial.println();
-        
-       
-        //Serial.print("  ekf  :  ");
-        //Serial.println(ko.state_estimate_k_updated[2]);
+    //    ko.calculation_ekf(odom.position_full, speed_time_factor, rpm_L, rpm_R);
+    //    Serial.print("ekf X: ");
+    //    Serial.print(ROBOT_X);
+    //    Serial.print("  Y: ");
+    //    Serial.print(ROBOT_Y);
+    //    Serial.print("  Theta deg: ");
+    //    Serial.print(ROBOT_THETA * rad_to_deg);
+    //    Serial.println();
+    //    
+    //   
+    //    //Serial.print("  ekf  :  ");
+    //    //Serial.println(ko.state_estimate_k_updated[2]);
 
 
-        //ks.calculation_step(odom_rot.position_rotation, speed_time_factor, rpm_L, rpm_R);
-        //Serial.print("  rot theta after ekf  :  ");
-        //Serial.println(ks.state_estimate_k_updated_step[2]);
+    //    //ks.calculation_step(odom_rot.position_rotation, speed_time_factor, rpm_L, rpm_R);
+    //    //Serial.print("  rot theta after ekf  :  ");
+    //    //Serial.println(ks.state_estimate_k_updated_step[2]);
 
-        prevTime = curTime;   // update the time 
+    //    prevTime = curTime;   // update the time 
 
-    }
+    //}
 
     /*Serial.print("l:  ");
     Serial.print(countPulsesL);
@@ -1882,7 +1913,7 @@ void batery_measuring() {
             if (battery > upper_bat_range) { battery = upper_bat_range; }
             if (battery < low_bat_range) { battery = low_bat_range; }
             //bat_factor_pid = map(battery, 760, 870, 40, 0); //12.54-11V //for motors
-            bat_factor_pid = map(battery, 760, 870, 17, 0); //12.54-11V //for motors
+            bat_factor_pid = map(battery, 670, 845, 23, 0); //12.54-11V //for motors
             // BAT_percent calculation
             BAT_percent = map(battery, 670, 845, 0, 100); //10.00 - 12.54 V //battery=(V*204.6)/ 3.0423
             if (BAT < 9) { BAT_percent = 0; }
@@ -2015,6 +2046,8 @@ void output_straight_line() {
 
     THETA_PID_L.Compute(); // calculate PID theta error
     THETA_PID_R.Compute(); // calculate PID theta error
+    //Serial.print("theta output l: ");
+    //Serial.println(theta_pid_output_l);
 
     if (ROBOT_THETA_ROTATION == 0) {
         final_speed_l = SPEED_L_target;
@@ -2023,14 +2056,14 @@ void output_straight_line() {
     }
 
     else if (ROBOT_THETA_ROTATION < 0) {
-        final_speed_l = SPEED_L_target - abs(theta_pid_output_l);
-        final_speed_r = SPEED_R_target + abs(theta_pid_output_r);
+        final_speed_l = SPEED_L_target + abs(theta_pid_output_l);
+        final_speed_r = SPEED_R_target - abs(theta_pid_output_r);
 
     }
 
     else if (ROBOT_THETA_ROTATION > 0) {
-        final_speed_l = SPEED_L_target + abs(theta_pid_output_l);
-        final_speed_r = SPEED_R_target - abs(theta_pid_output_r);
+        final_speed_l = SPEED_L_target - abs(theta_pid_output_l);
+        final_speed_r = SPEED_R_target + abs(theta_pid_output_r);
 
     }
 
