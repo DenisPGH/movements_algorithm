@@ -6,6 +6,10 @@ double ROBOT_X_ROTATION = 0; //
 double ROBOT_Y_ROTATION = 0; // 
 double TARGET_ANGLE_ROTATION = 0; // main variable
 
+double ROBOT_X_STEP = 0; //main vaiable
+double ROBOT_Y_STEP = 0;//main vaiable
+double ROBOT_THETA_STEP = 0; //radians main vaiable 
+
 double ROBOT_CURRENT_TRAVELED_DISTANCE = 0;
 double ROBOT_LAST_TRAVELED_DISTANCE = 0;
 
@@ -22,26 +26,27 @@ const int MIN_L = 27; //30
 const int MIN_R = 30; //30
 
 const double Kp_L_theta = 28; // # 28
-const double Ki_L_theta = 100; //  # 10
-const double Kd_L_theta = 0.2; // # 0.2
+const double Ki_L_theta = 97; //  # 97
+const double Kd_L_theta = 0.13; // # 0.15
 
-const double Kp_R_theta = 35; // # 28
-const double Ki_R_theta = 200; // # 10
-const double Kd_R_theta = 0.9; // # 0.2
+const double Kp_R_theta = 35.6; // # 35.6
+const double Ki_R_theta = 88; // # 88
+const double Kd_R_theta = 1; // # 1
 
-const double Kp_L = 2.9; // # 10.62
+const double Kp_L = 2.9; // # 2.9
 const double Ki_L = 0; // # 0
 const double Kd_L = 0; // # 0
 
-const double Kp_R = 2.9; // # 9.2
+const double Kp_R = 3.25; // # 3.25
 const double Ki_R = 0; //  # 0
 const double Kd_R = 0; // # 0
 
-const double Kp_L_rot = 2.9; // # 2.9
+
+const double Kp_L_rot = 5.3; // # 2.9
 const double Ki_L_rot = 0; // # 0
 const double Kd_L_rot = 0; // # 0
 
-const double Kp_R_rot = 2.9; // # 2.9
+const double Kp_R_rot = 5.5; // # 2.9
 const double Ki_R_rot = 0; //  # 0
 const double Kd_R_rot = 0; // # 0
 
@@ -157,8 +162,10 @@ double setpoint_rot_L = TARGET_ANGLE_ROTATION;
 double setpoint_rot_R = TARGET_ANGLE_ROTATION;
 double CURRENT_THETA_DEG = 0;
 
-PID ROTATION_PID_L(&CURRENT_THETA_DEG, &PID_ROTATION_OUTPUT_L, &setpoint_rot_L, Kp_L_rot, Ki_L_rot, Kd_L_rot, DIRECT);
-PID ROTATION_PID_R(&CURRENT_THETA_DEG, &PID_ROTATION_OUTPUT_R, &setpoint_rot_R, Kp_R_rot, Ki_R_rot, Kd_R_rot, DIRECT);
+double test_speed_rotation = ROBOT_THETA_ROTATION * deg_to_rad;
+
+PID ROTATION_PID_L(&test_speed_rotation, &PID_ROTATION_OUTPUT_L, &setpoint_rot_L, Kp_L_rot, Ki_L_rot, Kd_L_rot, DIRECT);
+PID ROTATION_PID_R(&test_speed_rotation, &PID_ROTATION_OUTPUT_R, &setpoint_rot_R, Kp_R_rot, Ki_R_rot, Kd_R_rot, DIRECT);
 
 
 
@@ -373,6 +380,419 @@ public:
 };
 
 
+
+class KalmanVariablesOdometry {
+public:
+
+    double CONTROL_YAW_RATE = 0.0;  // rad / sec
+    int WIDTH_CAR = 18;
+    double RADIUS_WHEEL = 3.4;
+    double rpm_to_radians = 0.10471975512;
+
+    //A matrix = > how state of the system[x, y, yaw] changes
+    double STATE_CHANGES_X = 1.0;
+    double STATE_CHANGES_Y = 1.0;
+    double STATE_CHANGES_THETA = 0.1;  // 1.0
+    // proccess noice
+    double PROCCESS_NOICE_X = 0.01;  // 0.01
+    double PROCCESS_NOICE_Y = 0.01;  // 0.01
+    double PROCCESS_NOICE_THETA = 0.003; // 0.003
+    // Q matrix = > more Q in sensor, small Q prediction
+    double STATE_MODEL_NOICE_X = 1.0;
+    double STATE_MODEL_NOICE_Y = 1.0; //1
+    double STATE_MODEL_NOICE_THETA = 1.0;
+    // H identity matrix Measurement matrix, convert the predicted state = > measurments state
+    double IDENTITY_X = 1.0;
+    double IDENTITY_Y = 1.0;
+    double IDENTITY_THETA = 1.0;
+
+    // R Sensor measurement noise covariance, if sure in R, R = 0
+    double SENSOR_MEASURMENT_NOICE_X = 1.0;
+    double SENSOR_MEASURMENT_NOICE_Y = 1.0;
+    double SENSOR_MEASURMENT_NOICE_THETA = 1;  // 1.0
+    // Sensor noice
+    double SENSOR_NOICE_X = -0.04; // - 0.04
+    double SENSOR_NOICE_Y = 0.048; //0.049, 0.042
+    double SENSOR_NOICE_THETA = 0.0027;  //  + 0.0026, -0.004 which direction make noise
+
+    // estimation state, where the robot start[0,0,0]
+    double ESTIMATET_STATE_LAST_X = ROBOT_X;
+    double ESTIMATET_STATE_LAST_Y = ROBOT_Y;
+    double ESTIMATET_STATE_LAST_THETA = ROBOT_THETA; //radians
+    double state_estimate_k_minus_1[3] = { ESTIMATET_STATE_LAST_X,
+        ESTIMATET_STATE_LAST_Y,
+        ESTIMATET_STATE_LAST_THETA }; // [meters, meters, radians]
+
+
+    // P matrix
+    double ACCURACY_STATE_X = 0.1;
+    double ACCURACY_STATE_Y = 0.1;
+    double ACCURACY_STATE_THETA = 0.1; // 0.1
+
+    double ACCURACY_STATE_X_curr = 0.1;
+    double ACCURACY_STATE_Y_curr = 0.1;
+    double ACCURACY_STATE_THETA_curr = 0.1; // 0.1
+
+    double P_k_minus_1[3][3] = { {ACCURACY_STATE_X, 0, 0},
+                                {0, ACCURACY_STATE_Y, 0},
+                                {0, 0, ACCURACY_STATE_THETA} };
+
+
+
+};
+
+
+
+class KalmanOdometry : public KalmanVariablesOdometry {
+    double control_vector_k_minus_1[3] = { 0, 0, CONTROL_YAW_RATE };
+    double A_k_minus_1[3][3] = {
+                {STATE_CHANGES_X, 0, 0},
+                { 0, STATE_CHANGES_Y, 0},
+                {0, 0, STATE_CHANGES_THETA} };
+    double process_noise_v_k_minus_1[3] = { PROCCESS_NOICE_X,
+                                            PROCCESS_NOICE_Y,
+                                            PROCCESS_NOICE_THETA };
+    double Q_k[3][3] = { {STATE_MODEL_NOICE_X, 0, 0},
+                       {0, STATE_MODEL_NOICE_Y, 0},
+                       {0, 0, STATE_MODEL_NOICE_THETA} };
+
+    double H_k[3][3] = { {IDENTITY_X, 0, 0},
+                        {0, IDENTITY_Y, 0 },
+                         {0, 0, IDENTITY_THETA} };
+
+    double R_k[3][3] = { {SENSOR_MEASURMENT_NOICE_X, 0, 0},
+                        {0, SENSOR_MEASURMENT_NOICE_Y, 0},
+                        {0, 0, SENSOR_MEASURMENT_NOICE_THETA} };
+
+    double sensor_noise_w_k[3] = { SENSOR_NOICE_X,
+                    SENSOR_NOICE_Y,
+                    SENSOR_NOICE_THETA };
+
+    double R_matrix[3][3];
+    double prediction_ekf[3] = { 0,0,0 };
+
+    double state_estimate_k_prediction[3] = { 0,0,0 };
+
+    double result[3] = { 0,0,0 };
+
+    double final_P_k[3][3] = { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };
+    double state_estimate_k_updated[3] = { 0,0,0 };
+
+
+
+private:
+    void multiply_3x3__3x3(const double(&a)[N][N],
+        const double(&b)[N][N], double(&c)[N][N]) {
+        // multiply two matrices 3x3 and 3x3
+        for (int i = 0; i < 3; i++)
+            for (int j = 0; j < 3; j++) {
+                for (int u = 0; u < 3; u++)
+                    c[i][j] += a[i][u] * b[u][j];
+            }
+    }
+
+    void transpose_matrix_3x3(const double(&a)[N][N],
+        double(&res)[N][N]) {
+        int i, j;
+        for (i = 0; i < 3; i++) {
+            for (j = 0; j < 3; j++) {
+                res[i][j] = a[j][i];
+            }
+
+        }
+    }
+
+    void sum_two_matrices_3_x_3(const double(&a)[N][N],
+        const  double(&b)[N][N], double(&res)[N][N]) {
+        int i, j;
+        for (i = 0; i < 3; i++) {
+            for (j = 0; j < 3; j++) {
+                res[i][j] = a[i][j] + b[i][j];
+            }
+
+        }
+    }
+
+    void subtract_two_matrices_3x3__3x3(const double(&a)[N][N],
+        const  double(&b)[N][N], double(&res)[N][N]) {
+        int i, j;
+        for (i = 0; i < 3; i++) {
+            for (j = 0; j < 3; j++) {
+                res[i][j] = a[i][j] - b[i][j];
+            }
+
+        }
+    }
+
+
+    void multiply_3x3__and_3x1_(const double(&a)[N][N],
+        const double(&b)[N], double(&res)[N]) {
+        for (int i = 0; i < 3; i++) { // All array elements
+            res[i] = 0;
+            for (int j = 0; j < 3; j++) {
+                res[j] += a[j][i] * b[i];
+            }
+
+        }
+    }
+
+
+    void sum_two_matrices_3x1_3x1(const double(&a)[N],
+        const  double(&b)[N], double(&res)[N]) {
+        int i;
+        for (i = 0; i < 3; i++) {
+            res[i] = a[i] + b[i];
+        }
+    }
+
+    void subtract_two_matrices_3x1__3x1(const double(&a)[N],
+        const  double(&b)[N], double(&res)[N]) {
+        int i;
+        for (i = 0; i < 3; i++) {
+            res[i] = a[i] - b[i];
+        }
+    }
+
+    void pinv_matrix_3x3(const double(&m)[N][N],
+        double(&res)[N][N]) {
+        double d = 0;
+
+        //finding determinant of the matrix
+        for (int i = 0; i < 3; i++)
+            d = d + (m[0][i] * (m[1][(i + 1) % 3] * m[2][(i + 2) % 3] - m[1][(i + 2) % 3] * m[2][(i + 1) % 3]));
+
+        if (d > 0)//Condition to check if the derterminat is zero or not if zero than inverse dont exists
+        {
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
+                    res[i][j] = ((m[(j + 1) % 3][(i + 1) % 3] *
+                        m[(j + 2) % 3][(i + 2) % 3]) -
+                        (m[(j + 1) % 3][(i + 2) % 3] *
+                            m[(j + 2) % 3][(i + 1) % 3])) / d; //finding adjoint and dividing it by determinant
+                }
+            }
+
+        }
+
+
+    }
+
+    void assume_matrix_3x3(const double(&from)[N][N],
+        double(&to)[N][N]) {
+        int i, j;
+        for (i = 0; i < 3; i++) {
+            for (j = 0; j < 3; j++) {
+                to[i][j] = from[i][j];
+
+            }
+        }
+    }
+
+    void assume_matrix_3x1(const double(&from)[N],
+        double(&to)[N]) {
+        int i;
+        for (i = 0; i < 3; i++) {
+            to[i] = from[i];
+            //cout:fixed;
+            ///out << from[i] << endl;
+            //printf("%0.6f\n", double(to[i]));
+        }
+    }
+
+
+
+
+    void get_B(double control_vector_k_minus_1_getB[3],
+        double(&state_estimate_k_minus_1_getB)[3], double dt_getB) {
+        /*  :param control_vector_k_minus_1 : [rpm, rpm, rad / sec]
+            : param state_estimate_k_minus_1 : [cm, cm, rad]
+            : return : prediction in world frame
+            """*/
+
+        double vel_l = control_vector_k_minus_1_getB[0] * rpm_to_radians;
+        double vel_r = control_vector_k_minus_1_getB[1] * rpm_to_radians;
+        double omega = (((vel_l - vel_r) / (WIDTH_CAR)) * RADIUS_WHEEL) * dt_getB;
+        double R = 0;
+        if (vel_l != vel_r) {
+            R = WIDTH_CAR / 2.0 * ((vel_r + vel_l) / (vel_l - vel_r));
+        }
+        else { R = 0.0; }
+
+
+        double ICC_x = state_estimate_k_minus_1_getB[0] - R * sin(state_estimate_k_minus_1_getB[2]);
+        double ICC_y = state_estimate_k_minus_1_getB[1] + R * cos(state_estimate_k_minus_1_getB[2]);
+
+        double R_matrix[3][3] = { {cos(omega), -sin(omega), 0},
+                                 {sin(omega), cos(omega), 0},
+                                 {0, 0, 1},
+        };
+
+        double A[3] = { state_estimate_k_minus_1_getB[0] - ICC_x,
+                        state_estimate_k_minus_1_getB[1] - ICC_y,
+                            state_estimate_k_minus_1_getB[2] };
+
+        double B[3] = { ICC_x, ICC_y, omega };
+
+
+        //float result[3] = R_matrix @ A + B.T;
+
+        //calculation the matrix
+
+        for (int i = 0; i < 3; i++) { // All array elements
+            result[i] = 0;
+            for (int j = 0; j < 3; j++) {
+                result[j] += R_matrix[j][i] * A[i];
+            }
+
+        }
+
+
+        prediction_ekf[0] = result[0] + B[0];
+        prediction_ekf[1] = result[1] + B[1];
+        prediction_ekf[2] = result[2] + B[2];
+
+
+    }
+
+
+
+    void ekf(double(&z_k_observation_vector_ekf)[3],
+        double(&state_estimate_k_minus_1_ekf)[3],
+        double control_vector_k_minus_1_ekf[3],
+        double(&P_k_minus_1_ekf)[3][3],
+        double dk_ekf) {
+
+        //print_3x1_matrix(z_k_observation_vector);
+
+        ////// PREDICT /////////////////////////
+
+
+        get_B(control_vector_k_minus_1_ekf, state_estimate_k_minus_1_ekf, dk_ekf);
+        for (int i = 0; i < 3; i++) {
+            state_estimate_k_prediction[i] = prediction_ekf[i]
+                + process_noise_v_k_minus_1[i];
+
+        }
+
+        //Predict the state covariance
+        // P_k = self.A_k_minus_1 @ P_k_minus_1 @ self.A_k_minus_1.T + (self.Q_k)
+        // A_k_minus_1[3][3],P_k_minus_1[3][3] @ A_k_minus_1.T[3][3] + self.Q_k[3][3]
+        double P_k_1[3][3] = { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };;
+
+        multiply_3x3__3x3(A_k_minus_1, P_k_minus_1_ekf, P_k_1);
+        double P_k_2[3][3] = { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };;
+        double A_k_minus_1_T[3][3] = { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };;
+        transpose_matrix_3x3(A_k_minus_1, A_k_minus_1_T);
+        multiply_3x3__3x3(P_k_1, A_k_minus_1_T, P_k_2);
+        double P_k[3][3] = { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };; // final
+        sum_two_matrices_3_x_3(P_k_2, Q_k, P_k);
+        //print_3x3_matrix(P_k);
+
+
+        ////////////////   Update (Correct) ////////////////////////
+        //= z_k_observation_vector[3] - ((self.H_k @ state_estimate_k_prediction) + (self.sensor_noise_w_k))
+        double measurement_residual_y_k_1[3] = { 0,0,0 };
+        double meas_res_1[3] = { 0.0,0.0,0.0 };
+        multiply_3x3__and_3x1_(H_k, state_estimate_k_prediction, meas_res_1);
+        sum_two_matrices_3x1_3x1(meas_res_1, sensor_noise_w_k, measurement_residual_y_k_1);
+        double measurement_residual_y_k[3] = { 0,0,0 };
+        subtract_two_matrices_3x1__3x1(z_k_observation_vector_ekf, measurement_residual_y_k_1, measurement_residual_y_k);
+
+
+        //print_3x1_matrix(measurement_residual_y_k);
+
+        //Calculate the measurement residual covariance
+        //S_k = self.H_k[3][3] @ P_k[3][3] @ self.H_k.T[3][3] + self.R_k[3][3]
+        double S_k_1[3][3] = { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };
+        multiply_3x3__3x3(H_k, P_k, S_k_1);
+        double S_k_2[3][3] = { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };
+        double H_k_Transpose[3][3] = { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };
+        transpose_matrix_3x3(H_k, H_k_Transpose);
+        multiply_3x3__3x3(S_k_1, H_k_Transpose, S_k_2);
+        double S_k[3][3] = { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };
+        sum_two_matrices_3_x_3(S_k_2, R_k, S_k);
+
+        //Calculate the near-optimal Kalman gain
+        //K_k = P_k @ self.H_k.T @ np.linalg.pinv(S_k)
+
+        double K_k_1[3][3] = { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };
+        multiply_3x3__3x3(P_k, H_k_Transpose, K_k_1);
+        double K_k[3][3] = { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };
+        double pinv_S_k[3][3] = { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };
+        pinv_matrix_3x3(S_k, pinv_S_k);
+        multiply_3x3__3x3(K_k_1, pinv_S_k, K_k);
+
+        // Calculate an updated state estimate for time k
+        //  state_estimate_k_updated = state_estimate_k_prediction + 
+        //   (K_k @ measurement_residual_y_k)
+
+        //double state_estimate_k_updated[3];
+        double stat_midle[3] = { 0,0,0 };
+        multiply_3x3__and_3x1_(K_k, measurement_residual_y_k, stat_midle);
+        sum_two_matrices_3x1_3x1(state_estimate_k_prediction, stat_midle, state_estimate_k_updated);
+
+        // Update the state covariance estimate for time k
+        // P_k = P_k - (K_k @ self.H_k @ P_k)
+        double help_b[3][3] = { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };
+        double help_a[3][3] = { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };
+        multiply_3x3__3x3(K_k, H_k, help_a);
+        multiply_3x3__3x3(help_a, P_k, help_b);
+        //double final_P_k[3][3];
+        subtract_two_matrices_3x3__3x3(P_k, help_b, final_P_k);
+
+
+
+        // Return the updated state and covariance estimates
+        // return state_estimate_k_updated, P_k //out of this scope
+
+        assume_matrix_3x1(state_estimate_k_updated, state_estimate_k_minus_1_ekf);
+        assume_matrix_3x3(final_P_k, P_k_minus_1_ekf);
+        ROBOT_X = state_estimate_k_minus_1_ekf[0];
+        ROBOT_Y = state_estimate_k_minus_1_ekf[1];
+        ROBOT_THETA = state_estimate_k_minus_1_ekf[2];
+
+    }
+
+
+public:
+    // after ekf 
+
+
+    void calculation_ekf(double(&z_k_calc)[3], double dt_calc, double V_l, double V_r) {
+
+        double control_vector_k_minus_1_[3] = { V_l, V_r,CONTROL_YAW_RATE }; // [rpm, rpm, rad / sec]
+
+        //calculate into final_P_k ,state_estimate_k_updated
+        if (V_l != 0 || V_r != 0) {
+            ekf(z_k_calc, state_estimate_k_minus_1, control_vector_k_minus_1_,
+                P_k_minus_1, dt_calc);
+
+        }
+
+
+        //update 
+        //state_estimate_k_minus_1 = state_estimate_k_updated
+         //P_k_minus_1 = final_P_k
+        //assume_matrix_3x1(state_estimate_k_updated, state_estimate_k_minus_1);
+        //assume_matrix_3x3(final_P_k, P_k_minus_1);
+
+
+
+
+
+
+
+    }
+
+
+
+};
+
+
+
+/////////////////////////// ODOMETRY CLASS STOP/////////////////////////////////////////////////////////
+
+//////////////////////////  ROTATION START ////////////////////////////////////////////////////////////
 class ODOMETRY_ROTATION {
 
     double rpm_to_radians = 0.10471975512;
@@ -455,6 +875,10 @@ public:
         position_rotation[1] = result[1] + B[1];
         position_rotation[2] = result[2] + B[2];
 
+
+        //Serial.print("position_rotation[2] : ");
+        //Serial.println(position_rotation[2]);
+
         /*ROBOT_X_ROTATION = position_rotation[0];
         ROBOT_Y_ROTATION = position_rotation[1];
         ROBOT_THETA_ROTATION = position_rotation[2];*/
@@ -467,9 +891,7 @@ public:
 };
 
 
-/////////////////////////// ODOMETRY CLASS STOP/////////////////////////////////////////////////////////
-//////////////////////////  KALMAN STEP START ////////////////////////////////////////////////////////////
-class KalmanVariablesStep {
+class KalmanVariablesRotation {
 public:
 
     double CONTROL_YAW_RATE = 0.0;  // rad / sec
@@ -531,7 +953,7 @@ public:
 
 
 
-class KalmanStep : public KalmanVariablesStep {
+class KalmanRotation : public KalmanVariablesRotation {
     double control_vector_k_minus_1[3] = { 0, 0, CONTROL_YAW_RATE };
     double control_vector_k_minus_1_step[3] = { 0, 0, CONTROL_YAW_RATE };
     double A_k_minus_1[3][3] = {
@@ -900,12 +1322,109 @@ public:
 
 };
 
-//////////////////////////  KALMAN STEP STOP ///////////////////////////////////////////////////
+////////////////////////// ROTATION STOP ///////////////////////////////////////////////////
+
+
+////////////////////////// STEP START ////////////////////////////////////////////////////////////
+class ODOMETRY_STEP {
+
+    double rpm_to_radians = 0.10471975512;
+    double radius_wheel = 3.4;
+    double width_of_car = 18.0;
+
+private:
+    double calculation_omega(double vel_l, double vel_r, double delta_time) {
+        double  omega = (((vel_l - vel_r) / (width_of_car)) * radius_wheel) * delta_time;
+        return omega;
+    }
+
+
+public:
+    void print_3x1_matrix(const double(&m)[3]) {
+        int i;
+        for (i = 0; i < 3; i++) {
+            Serial.print(m[i]);
+        }
+        Serial.println();
+
+    }
+
+
+    double position_rotation[3]{ 0,0,0 }; //use this in roatation
+    void calculation_position_step(double vel_l, double vel_r,
+        double delta_time, double curr_x, double curr_y, double curr_theta) {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="vel_l"></param>
+        /// <param name="vel_r"></param>
+        /// <param name="delta_time"></param>
+        /// <param name="curr_x"></param>
+        /// <param name="curr_y"></param>
+        /// <param name="curr_theta"> radians</param>
+        vel_l *= rpm_to_radians;
+        vel_r *= rpm_to_radians;
+        //curr_theta = curr_theta * (3.1415 / 180);;
+        double omega = calculation_omega(vel_l, vel_r, delta_time);
+
+        double R = 0;
+        if (vel_l != vel_r) {
+            R = width_of_car / 2.0 * ((vel_r + vel_l) / (vel_l - vel_r));
+        }
+        else { R = 0.0; }
+
+
+        double ICC_x = curr_x - R * sin(curr_theta);
+        double ICC_y = curr_y + R * cos(curr_theta);
+
+        double R_matrix[3][3] = { {cos(omega), -sin(omega), 0},
+                                 {sin(omega), cos(omega), 0},
+                                 {0, 0, 1},
+        };
+
+        double A[3] = { curr_x - ICC_x,
+                        curr_y - ICC_y,
+                            curr_theta };
+
+        double B[3] = { ICC_x, ICC_y, omega };
+
+
+        //float result[3] = R_matrix @ A + B.T;
+        double result[3] = { 0,0,0 };
+        //calculation the matrix
+
+        for (int i = 0; i < 3; i++) { // All array elements
+            result[i] = 0;
+            for (int j = 0; j < 3; j++) {
+                result[j] += R_matrix[j][i] * A[i];
+            }
+
+        }
 
 
 
-//////////////////////////  KALMAN ODOMETRY START ///////////////////////////////////////////////////
-class KalmanVariablesOdometry {
+
+        position_rotation[0] = result[0] + B[0];
+        position_rotation[1] = result[1] + B[1];
+        position_rotation[2] = result[2] + B[2];
+
+
+        //Serial.print("position_rotation[2] : ");
+        //Serial.println(position_rotation[2]);
+
+        /*ROBOT_X_ROTATION = position_rotation[0];
+        ROBOT_Y_ROTATION = position_rotation[1];
+        ROBOT_THETA_ROTATION = position_rotation[2];*/
+
+
+
+    }
+
+
+};
+
+
+class KalmanVariablesSTEP {
 public:
 
     double CONTROL_YAW_RATE = 0.0;  // rad / sec
@@ -939,10 +1458,10 @@ public:
     double SENSOR_NOICE_Y = 0.048; //0.049, 0.042
     double SENSOR_NOICE_THETA = 0.0027;  //  + 0.0026, -0.004 which direction make noise
 
-    // estimation state, where the robot start[0,0,0]
-    double ESTIMATET_STATE_LAST_X = ROBOT_X;
-    double ESTIMATET_STATE_LAST_Y = ROBOT_Y;
-    double ESTIMATET_STATE_LAST_THETA = ROBOT_THETA; //radians
+    // estimation state, where the robot start
+    double ESTIMATET_STATE_LAST_X = ROBOT_X_ROTATION;
+    double ESTIMATET_STATE_LAST_Y = ROBOT_Y_ROTATION;
+    double ESTIMATET_STATE_LAST_THETA = ROBOT_THETA_ROTATION; //radians
     double state_estimate_k_minus_1[3] = { ESTIMATET_STATE_LAST_X,
         ESTIMATET_STATE_LAST_Y,
         ESTIMATET_STATE_LAST_THETA }; // [meters, meters, radians]
@@ -967,8 +1486,9 @@ public:
 
 
 
-class KalmanOdometry : public KalmanVariablesOdometry {
+class KalmanSTEP : public KalmanVariablesSTEP {
     double control_vector_k_minus_1[3] = { 0, 0, CONTROL_YAW_RATE };
+    double control_vector_k_minus_1_step[3] = { 0, 0, CONTROL_YAW_RATE };
     double A_k_minus_1[3][3] = {
                 {STATE_CHANGES_X, 0, 0},
                 { 0, STATE_CHANGES_Y, 0},
@@ -994,13 +1514,6 @@ class KalmanOdometry : public KalmanVariablesOdometry {
 
     double R_matrix[3][3];
     double prediction_ekf[3] = { 0,0,0 };
-
-    double state_estimate_k_prediction[3] = { 0,0,0 };
-
-    double result[3] = { 0,0,0 };
-
-    double final_P_k[3][3] = { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };
-    double state_estimate_k_updated[3] = { 0,0,0 };
 
 
 
@@ -1123,19 +1636,34 @@ private:
         }
     }
 
+    void print_3x3_matrix(const double(&m)[N][N]) {
+        int i, j;
+        for (i = 0; i < 3; i++) {
+            for (j = 0; j < 3; j++) {
+                Serial.print(m[i][j]);
+
+            }
+            Serial.println();
+        }
+
+
+    }
 
 
 
-    void get_B(double control_vector_k_minus_1_getB[3],
-        double (&state_estimate_k_minus_1_getB)[3], double dt_getB) {
+
+
+
+    void get_B(double control_vector_k_minus_1_r[3],
+        double state_estimate_k_minus_1_r[3], double dt_r) {
         /*  :param control_vector_k_minus_1 : [rpm, rpm, rad / sec]
             : param state_estimate_k_minus_1 : [cm, cm, rad]
             : return : prediction in world frame
             """*/
 
-        double vel_l = control_vector_k_minus_1_getB[0] * rpm_to_radians;
-        double vel_r = control_vector_k_minus_1_getB[1] * rpm_to_radians;
-        double omega = (((vel_l - vel_r) / (WIDTH_CAR)) * RADIUS_WHEEL) * dt_getB;
+        double vel_l = control_vector_k_minus_1_r[0] * rpm_to_radians;
+        double vel_r = control_vector_k_minus_1_r[1] * rpm_to_radians;
+        double omega = (((vel_l - vel_r) / (WIDTH_CAR)) * RADIUS_WHEEL) * dt_r;
         double R = 0;
         if (vel_l != vel_r) {
             R = WIDTH_CAR / 2.0 * ((vel_r + vel_l) / (vel_l - vel_r));
@@ -1143,23 +1671,23 @@ private:
         else { R = 0.0; }
 
 
-        double ICC_x = state_estimate_k_minus_1_getB[0] - R * sin(state_estimate_k_minus_1_getB[2]);
-        double ICC_y = state_estimate_k_minus_1_getB[1] + R * cos(state_estimate_k_minus_1_getB[2]);
+        double ICC_x = state_estimate_k_minus_1_r[0] - R * sin(state_estimate_k_minus_1_r[2]);
+        double ICC_y = state_estimate_k_minus_1_r[1] + R * cos(state_estimate_k_minus_1_r[2]);
 
         double R_matrix[3][3] = { {cos(omega), -sin(omega), 0},
                                  {sin(omega), cos(omega), 0},
                                  {0, 0, 1},
         };
 
-        double A[3] = { state_estimate_k_minus_1_getB[0] - ICC_x,
-                        state_estimate_k_minus_1_getB[1] - ICC_y,
-                            state_estimate_k_minus_1_getB[2] };
+        double A[3] = { state_estimate_k_minus_1_r[0] - ICC_x,
+                        state_estimate_k_minus_1_r[1] - ICC_y,
+                            state_estimate_k_minus_1_r[2] };
 
         double B[3] = { ICC_x, ICC_y, omega };
 
 
         //float result[3] = R_matrix @ A + B.T;
-
+        double result[3] = { 0,0,0 };
         //calculation the matrix
 
         for (int i = 0; i < 3; i++) { // All array elements
@@ -1180,21 +1708,20 @@ private:
 
 
 
-    void ekf(double(&z_k_observation_vector_ekf)[3],
-        double (&state_estimate_k_minus_1_ekf)[3],
-        double control_vector_k_minus_1_ekf[3],
-        double(&P_k_minus_1_ekf)[3][3],
-        double dk_ekf) {
+    void ekf(double(&z_k_observation_vector_re)[3],
+        double(&state_estimate_k_minus_1_re)[3],
+        double control_vector_k_minus_1_re[3],
+        double(&P_k_minus_1_re)[3][3],
+        double dk_re) {
 
         //print_3x1_matrix(z_k_observation_vector);
 
         ////// PREDICT /////////////////////////
-
-
-        get_B(control_vector_k_minus_1_ekf, state_estimate_k_minus_1_ekf, dk_ekf);
+        double state_estimate_k_prediction[3] = { 0,0,0 };
+        get_B(control_vector_k_minus_1_re, state_estimate_k_minus_1_re, dk_re);
         for (int i = 0; i < 3; i++) {
-            state_estimate_k_prediction[i] = prediction_ekf[i]
-                + process_noise_v_k_minus_1[i];
+            state_estimate_k_prediction[i] = prediction_ekf[i] +
+                process_noise_v_k_minus_1[i];
 
         }
 
@@ -1203,7 +1730,7 @@ private:
         // A_k_minus_1[3][3],P_k_minus_1[3][3] @ A_k_minus_1.T[3][3] + self.Q_k[3][3]
         double P_k_1[3][3] = { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };;
 
-        multiply_3x3__3x3(A_k_minus_1, P_k_minus_1_ekf, P_k_1);
+        multiply_3x3__3x3(A_k_minus_1, P_k_minus_1, P_k_1);
         double P_k_2[3][3] = { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };;
         double A_k_minus_1_T[3][3] = { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };;
         transpose_matrix_3x3(A_k_minus_1, A_k_minus_1_T);
@@ -1220,7 +1747,7 @@ private:
         multiply_3x3__and_3x1_(H_k, state_estimate_k_prediction, meas_res_1);
         sum_two_matrices_3x1_3x1(meas_res_1, sensor_noise_w_k, measurement_residual_y_k_1);
         double measurement_residual_y_k[3] = { 0,0,0 };
-        subtract_two_matrices_3x1__3x1(z_k_observation_vector_ekf, measurement_residual_y_k_1, measurement_residual_y_k);
+        subtract_two_matrices_3x1__3x1(z_k_observation_vector_re, measurement_residual_y_k_1, measurement_residual_y_k);
 
 
         //print_3x1_matrix(measurement_residual_y_k);
@@ -1253,7 +1780,7 @@ private:
         //double state_estimate_k_updated[3];
         double stat_midle[3] = { 0,0,0 };
         multiply_3x3__and_3x1_(K_k, measurement_residual_y_k, stat_midle);
-        sum_two_matrices_3x1_3x1(state_estimate_k_prediction, stat_midle, state_estimate_k_updated);
+        sum_two_matrices_3x1_3x1(state_estimate_k_prediction, stat_midle, state_estimate_k_updated_step);
 
         // Update the state covariance estimate for time k
         // P_k = P_k - (K_k @ self.H_k @ P_k)
@@ -1269,50 +1796,70 @@ private:
         // Return the updated state and covariance estimates
         // return state_estimate_k_updated, P_k //out of this scope
 
-        assume_matrix_3x1(state_estimate_k_updated, state_estimate_k_minus_1_ekf);
-        assume_matrix_3x3(final_P_k, P_k_minus_1_ekf);
-        ROBOT_X = state_estimate_k_minus_1_ekf[0];
-        ROBOT_Y = state_estimate_k_minus_1_ekf[1];
-        ROBOT_THETA = state_estimate_k_minus_1_ekf[2];
+        assume_matrix_3x1(state_estimate_k_updated_step, state_estimate_k_minus_1_re);
+        assume_matrix_3x3(final_P_k, P_k_minus_1_re);
+
+        ROBOT_X_STEP = state_estimate_k_minus_1_re[0];
+        ROBOT_Y_STEP = state_estimate_k_minus_1_re[1];
+        ROBOT_THETA_STEP = state_estimate_k_minus_1_re[2];
 
     }
 
 
 public:
     // after ekf 
-    
+    double final_P_k[3][3] = { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };
+    double state_estimate_k_updated_step[3] = { 0,0,0 };
 
-    void calculation_ekf(double(&z_k_calc)[3], double dt_calc, double V_l, double V_r) {
-
-        double control_vector_k_minus_1_[3] = { V_l, V_r,CONTROL_YAW_RATE }; // [rpm, rpm, rad / sec]
+    void calculation_step_2(double(&z_k)[3], double dt_rr, double V_l, double V_r) {
+        double control_vector_k_minus_1_re[3] = { V_l, V_r,CONTROL_YAW_RATE }; // [rpm, rpm, rad / sec]
 
         //calculate into final_P_k ,state_estimate_k_updated
         if (V_l != 0 || V_r != 0) {
-            ekf(z_k_calc, state_estimate_k_minus_1, control_vector_k_minus_1_,
-                P_k_minus_1, dt_calc);
+            ekf(z_k, state_estimate_k_minus_1, control_vector_k_minus_1_re,
+                P_k_minus_1, dt_rr);
 
         }
-        
+
 
         //update 
         //state_estimate_k_minus_1 = state_estimate_k_updated
          //P_k_minus_1 = final_P_k
-        //assume_matrix_3x1(state_estimate_k_updated, state_estimate_k_minus_1);
-        //assume_matrix_3x3(final_P_k, P_k_minus_1);
 
-      
-        
 
-     
+    }
 
-       
+
+    void restart_calculation() {
+
+
+        for (int i = 0; i < N; i++) {
+            state_estimate_k_minus_1[i] = 0;
+        }
+        double  reset_P_k_minus_1[3][3] = { { ACCURACY_STATE_X, 0, 0 },
+             {0, ACCURACY_STATE_Y, 0},
+             {0, 0, ACCURACY_STATE_THETA} };
+
+        for (int i = 0; i < N; i++) {
+            for (int j = 0; j < N; j++) {
+                P_k_minus_1[i][j] = reset_P_k_minus_1[i][j];
+            }
+        }
+
+        ROBOT_X_STEP = 0;
+        ROBOT_Y_STEP = 0;
+        ROBOT_THETA_STEP = 0;
     }
 
 
 
 };
 
-//////////////////////////  KALMAN ODOMETRY STOP ///////////////////////////////////////////////////
+////////////////////////// STEP STOP ///////////////////////////////////////////////////
+
+
+
+
 
 
 
@@ -1371,11 +1918,12 @@ class BODY {
     KalmanOdometry ekf_b;
 
     ODOMETRY_ROTATION odo_rot;
-    KalmanStep ekf_step;
+    KalmanRotation ekf_rot;
+
+    ODOMETRY_STEP odo_step;
+    KalmanSTEP ekf_step;
+
     
-    //double delta_time = 0;
-    //double rad_to_deg = 57.29578;
-    //double last_time = 0;
 
 
 public:
@@ -1392,9 +1940,9 @@ public:
         /// <returns></returns>
         //vector<int> separated_degrees_if_more_than_90;
         int separated_degrees_if_more_than_90[3] = { 0,0,0 };
-        ROBOT_X_ROTATION = 0;
-        ROBOT_Y_ROTATION = 0;
-        ROBOT_THETA_ROTATION = 0;
+        ROBOT_X_STEP = 0;
+        ROBOT_Y_STEP = 0;
+        ROBOT_THETA_STEP = 0;
         ekf_step.restart_calculation();
         while (true) {
             if ((ROBOT_THETA * rad_to_deg) == direction_) {
@@ -1421,11 +1969,11 @@ public:
 
                 }
                 //////
-                for (auto angle : separated_degrees_if_more_than_90) {
+                for (double angle : separated_degrees_if_more_than_90) {
                     
-                    ROBOT_X_ROTATION = 0;
-                    ROBOT_Y_ROTATION = 0;
-                    ROBOT_THETA_ROTATION = 0;
+                    ROBOT_X_STEP = 0;
+                    ROBOT_Y_STEP = 0;
+                    ROBOT_THETA_STEP = 0;
                     ekf_step.restart_calculation();
                     if (angle == 0) {
                         continue;
@@ -1438,40 +1986,44 @@ public:
                             speed_calculation(); //1 speed calculation
                             calculation_traveled_distance(); // 2 distance calculation
                             batery_measuring(); // 2.1 battery update
-                            odo_rot.calculation_position_rotation(rpm_L, rpm_R, speed_time_factor, ROBOT_X_ROTATION, ROBOT_Y_ROTATION, ROBOT_THETA_ROTATION); //rotation             
-                            ekf_step.calculation_step(odo_rot.position_rotation, speed_time_factor, rpm_L, rpm_R);
+                            odo_step.calculation_position_step(rpm_L, rpm_R, speed_time_factor, ROBOT_X_STEP, ROBOT_Y_STEP, ROBOT_THETA_STEP); //rotation             
+                            ekf_step.calculation_step_2(odo_rot.position_rotation, speed_time_factor, rpm_L, rpm_R);
                             //Serial.print("  rot theta after ekf  :  ");
                             //Serial.println(ekf_step.state_estimate_k_updated_step[2]);
                             
                             prevTime = curTime;
 
                         }                       
-                        double current_angle_deg_ekf = ROBOT_THETA_ROTATION *rad_to_deg; //degrees
+                        double current_angle_deg_ekf = ROBOT_THETA_STEP *rad_to_deg; //degrees
                                                
                         if (current_angle_deg_ekf>= (angle)) {                            
                             ROBOT_THETA = direction_ * deg_to_rad;                            
-                            ROBOT_X_ROTATION = 0;
-                            ROBOT_Y_ROTATION = 0;
-                            ROBOT_THETA_ROTATION = 0;
+                            ROBOT_X_STEP = 0;
+                            ROBOT_Y_STEP = 0;
+                            ROBOT_THETA_STEP = 0;
                             ekf_step.restart_calculation();
                             actuator(2, 0, 0);
                             break;
 
                         }
                         else {      
-                            TARGET_ANGLE_ROTATION = angle ;
-                            CURRENT_THETA_DEG = current_angle_deg_ekf;
+                            TARGET_ANGLE_ROTATION = angle * deg_to_rad;
+                            CURRENT_THETA_DEG = ROBOT_THETA_STEP * deg_to_rad;
                             rotation_output(); //calculate PID values
-                            Serial.print("L : ");
+
+                            //Serial.print("teta deg : ");
+                            //Serial.println(ROBOT_THETA_ROTATION * rad_to_deg);
+                            
+                            /*Serial.print("L : ");
                             Serial.print(PID_ROTATION_OUTPUT_L);
                             Serial.print("  R : ");
-                            Serial.println(PID_ROTATION_OUTPUT_R);
+                            Serial.println(PID_ROTATION_OUTPUT_R);*/
 
                             if (dir_rotation == 'L') {
-                                actuator(3, PID_ROTATION_OUTPUT_L, PID_ROTATION_OUTPUT_R);
+                                actuator(3, PID_ROTATION_OUTPUT_L+20, PID_ROTATION_OUTPUT_R+23);
                             }
                             else if (dir_rotation == 'R') {
-                                actuator(4, PID_ROTATION_OUTPUT_L, PID_ROTATION_OUTPUT_R);
+                                actuator(4, PID_ROTATION_OUTPUT_L+23, PID_ROTATION_OUTPUT_R+20);
                             }
                             
                         }
@@ -1532,7 +2084,7 @@ public:
                     ekf_b.calculation_ekf(odo.position_full, speed_time_factor, rpm_L, rpm_R);
                     
                     odo_rot.calculation_position_rotation(rpm_L, rpm_R, speed_time_factor, ROBOT_X_ROTATION, ROBOT_Y_ROTATION, ROBOT_THETA_ROTATION); //rotation             
-                    ekf_step.calculation_step(odo_rot.position_rotation, speed_time_factor, rpm_L, rpm_R);
+                    ekf_rot.calculation_step(odo_rot.position_rotation, speed_time_factor, rpm_L, rpm_R);
                     
                     prevTime = curTime;   // update the time 
 
@@ -1704,7 +2256,8 @@ void loop() {
     BODY bod; //main class
     ////bod.move_one_step(TARGET_ORIENTATION_JETSON, DISTANCE_JETSON, DIRECTION, DIFFERENCE_ANGLE_JETSON);
     if (ROBOT_ARRIVED == false) {
-        bod.move_one_step(0, 100,'R',0); // (deg,dist,L/R,diff)
+        double winkel = 90;
+        bod.move_one_step(winkel, 10,'R',winkel); // (deg,dist,L/R,diff)
         Serial.print(" X: ");
         Serial.print(ROBOT_X);
         Serial.print("  Y: ");

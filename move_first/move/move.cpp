@@ -56,7 +56,7 @@ class Body {
     Helper_odometry helper_odo;
     KalmanOdometry ekf_b;
     KalmanRotation ekf_r;
-    KalmanStep ekf_step;
+    KalmanRotation ekf_step;
     OdometryRotation odo_rot;
     PID_Rotation pid_rot;
     ControlMotors cm;

@@ -201,7 +201,7 @@ public:
 
 /////////////////////////// ODOMETRY CLASS STOP/////////////////////////////////////////////////////////
 //////////////////////////  KALMAN STEP START ////////////////////////////////////////////////////////////
-class KalmanVariablesStep {
+class KalmanVariablesRotation {
 public:
 
     double CONTROL_YAW_RATE = 0.0;  // rad / sec
@@ -263,7 +263,7 @@ public:
 
 
 
-class KalmanStep : public KalmanVariablesStep {
+class KalmanRotation : public KalmanVariablesRotation {
     double control_vector_k_minus_1[3] = { 0, 0, CONTROL_YAW_RATE };
     double control_vector_k_minus_1_step[3] = { 0, 0, CONTROL_YAW_RATE };
     double A_k_minus_1[3][3] = {
@@ -1329,7 +1329,7 @@ class Body {
     ODOMETRY odo;
     KalmanOdometry ekf_b;
 
-    KalmanStep ekf_step;
+    KalmanRotation ekf_step;
     ODOMETRY_ROTATION odo_rot;
 
 
@@ -1601,7 +1601,7 @@ void loop() {
     ODOMETRY odom;// 3 odometry full
     KalmanOdometry ko;//kalman odometry improve the results
     ODOMETRY_ROTATION odom_rot; // odometry rotation
-    KalmanStep ks; // kalman step
+    KalmanRotation ks; // kalman step
     Body body; //main class
 
     info_from_jetson();

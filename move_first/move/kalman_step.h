@@ -6,7 +6,7 @@
 //#include<algorithm>
 using namespace std;
 
-class KalmanVariablesStep {
+class KalmanVariablesRotation {
 public:
 
     double CONTROL_YAW_RATE = 0.0;  // rad / sec
@@ -68,7 +68,7 @@ public:
 
 
 
-class KalmanStep : public KalmanVariablesStep {
+class KalmanRotation : public KalmanVariablesRotation {
     double control_vector_k_minus_1[3] = { 0, 0, CONTROL_YAW_RATE };
     double control_vector_k_minus_1_step[3] = { 0, 0, CONTROL_YAW_RATE };
     double A_k_minus_1[3][3] = {
