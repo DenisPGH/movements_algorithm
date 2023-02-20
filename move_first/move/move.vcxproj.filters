@@ -65,5 +65,11 @@
     <ClInclude Include="19_02_23.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="20_02_23_float.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="20_02_23.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
