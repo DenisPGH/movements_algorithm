@@ -1,3 +1,4 @@
+
 double ROBOT_X = 0; //main vaiable
 double ROBOT_Y = 0;//main vaiable
 double ROBOT_THETA = 0; //radians main vaiable 
@@ -16,7 +17,6 @@ double ROBOT_CURRENT_TRAVELED_DISTANCE = 0;
 double ROBOT_LAST_TRAVELED_DISTANCE = 0;
 
 bool ROBOT_ARRIVED = false;
-bool start_rotation = false;
 
 //////////////////////////////////////////////////
 //////////////////////////////////////////////////
@@ -75,11 +75,8 @@ unsigned long start = 0;
 
 
 
-unsigned long intervalTime = 100; //100, dt=0.4 ms,was 400
-double speed_time_factor = 0.1; //0.4
-
-unsigned long intervalTime_rotation = 100; //100, dt=0.4 ms
-double speed_time_factor_rotation = 0.1; //0.1
+unsigned long intervalTime = 100; //100, dt=0.4 ms
+double speed_time_factor = 0.1; //0.1
 
 const int DIR_AHEAD = 1;
 const int DIR_BACK = 2;
@@ -121,7 +118,7 @@ const double rpm_to_radians = 0.10471975512;
 const double rad_to_deg = 57.2957795; // 57.2957795
 const double deg_to_rad = 0.0174532925; // 0.0174532925
 
-const double Pi = 3.141592653589793;
+const float Pi = 3.141592653589793;
 
 int BAT_MEASSURING_INTERVAL = 1500;
 
@@ -135,7 +132,7 @@ unsigned long current_tics_R = 0;
 // variables for calculating the theta angle-orientation
 double speed_L_teta = 0;
 double speed_R_teta = 0;
-double wheel_diameter = 6.8; //cm 6.8  21.3
+int wheel_diameter = 6.8; //cm 6.8  21.3
 double radius_wheel = 3.4; //cm 0.034m  3.4 cm  68mm diameter
 double wheel_round = 21.3; // obikolka na koleloto w cm
 
@@ -197,8 +194,8 @@ unsigned long prevTime = 0;
 //double rps_L = 0;
 //double rps_R = 0;
 
-double leftRev = 1445.0;  // counts per revolution motor L 1447
-double rightRev = 1441.0;  // counts per revolution motor R 1441
+float leftRev = 1445;  // counts per revolution motor L 1447
+float rightRev = 1441;  // counts per revolution motor R 1441
 
 // desired speed give here
 
@@ -309,7 +306,7 @@ class ODOMETRY {
     double result_[3] = { 0,0,0 };
 
 private:
-    double calculation_omega(const double vel_l, const double vel_r, double delta_time) {
+    double calculation_omega(double vel_l, double vel_r, double delta_time) {
         double  omega = (((vel_l - vel_r) / (width_of_car)) * radius_wheel) * delta_time;
         return omega;
     }
@@ -327,17 +324,16 @@ public:
 
     double position_full[3]{ 0,0,0 }; //use this in odometry x,y,theta
     //double position_rotation[3]{ 0,0,0 }; //use this in roatation
-    void calculation_position(const double vel_l,const double vel_r,
+    void calculation_position(double vel_l, double vel_r,
         double delta_time, double curr_x, double curr_y, double curr_theta) {
-
-        double vel_L = vel_l * rpm_to_radians;
-        double vel_R = vel_r * rpm_to_radians;
-
+        vel_l *= rpm_to_radians;
+        vel_r *= rpm_to_radians;
         //curr_theta = curr_theta * (3.1415 / 180);;
-        double omega = calculation_omega(vel_L, vel_R, delta_time);
-        
-        if (vel_L != vel_R) {
-            R = width_of_car / 2.0 * ((vel_R + vel_L) / (vel_L - vel_R));
+        double omega = calculation_omega(vel_l, vel_r, delta_time);
+
+        double R = 0;
+        if (vel_l != vel_r) {
+            R = width_of_car / 2.0 * ((vel_r + vel_l) / (vel_l - vel_r));
         }
         else { R = 0.0; }
 
@@ -807,9 +803,9 @@ class ODOMETRY_ROTATION {
     double width_of_car = 18.0;
 
 private:
-    double calculation_omega(const double vel_l, const double vel_r, double delta_time) {
-        double  omega_ = (((vel_l - vel_r) / (width_of_car)) * radius_wheel) * delta_time;
-        return omega_;
+    double calculation_omega(double vel_l, double vel_r, double delta_time) {
+        double  omega = (((vel_l - vel_r) / (width_of_car)) * radius_wheel) * delta_time;
+        return omega;
     }
 
 
@@ -825,11 +821,8 @@ public:
 
 
     double position_rotation[3]{ 0,0,0 }; //use this in roatation
-    double R = 0;
-    double result[3] = { 0,0,0 };
-    double omega = 0;
-    void calculation_position_rotation(const double vel_l, const double vel_r,
-        double delta_time_, double curr_x, double curr_y, double curr_theta) {
+    void calculation_position_rotation(double vel_l, double vel_r,
+        double delta_time, double curr_x, double curr_y, double curr_theta) {
         /// <summary>
         /// 
         /// </summary>
@@ -839,46 +832,16 @@ public:
         /// <param name="curr_x"></param>
         /// <param name="curr_y"></param>
         /// <param name="curr_theta"> radians</param>
-        double vel_L= vel_l * rpm_to_radians;
-        double vel_R= vel_r * rpm_to_radians;
-        
-       
-        ////curr_theta = curr_theta * (3.1415 / 180);;
-        //if (curr_theta ==0 ) {
-        //    omega = 0;
+        vel_l *= rpm_to_radians;
+        vel_r *= rpm_to_radians;
+        //curr_theta = curr_theta * (3.1415 / 180);;
+        double omega = calculation_omega(vel_l, vel_r, delta_time);
 
-        //}   
-        //else { omega = calculation_omega(vel_L, vel_R, delta_time_); }
-
-        /*Serial.print(" l: ");
-        Serial.print(vel_l);
-        Serial.print(" r: ");
-        Serial.println(vel_r);*/
-
-        if (start_rotation != false) {
-            omega = (((vel_L - vel_R) / (width_of_car)) * radius_wheel) * delta_time_;
-            R = width_of_car / 2.0 * ((vel_R + vel_L) / (vel_L - vel_R));
-
+        double R = 0;
+        if (vel_l != vel_r) {
+            R = width_of_car / 2.0 * ((vel_r + vel_l) / (vel_l - vel_r));
         }
-        else {
-            omega = 0;
-            R = 0.0;
-            rpm_L = 0;
-            rpm_R = 0.001;
-
-        }
-
-        
-        //Serial.println(omega);
-       
-
-        
-
-        
-       /* if (vel_L != vel_R) {
-            R = width_of_car / 2.0 * ((vel_R + vel_L) / (vel_L - vel_R));
-        }
-        else { R = 0.0; }*/
+        else { R = 0.0; }
 
 
         double ICC_x = curr_x - R * sin(curr_theta);
@@ -897,7 +860,7 @@ public:
 
 
         //float result[3] = R_matrix @ A + B.T;
-       
+        double result[3] = { 0,0,0 };
         //calculation the matrix
 
         for (int i = 0; i < 3; i++) { // All array elements
@@ -922,7 +885,6 @@ public:
         /*ROBOT_X_ROTATION = position_rotation[0];
         ROBOT_Y_ROTATION = position_rotation[1];
         ROBOT_THETA_ROTATION = position_rotation[2];*/
-        start_rotation = true;
 
 
 
@@ -1964,13 +1926,10 @@ class BODY {
 
     ODOMETRY_STEP odo_step;
     KalmanSTEP ekf_step;
+    bool ok_ = true;
 
-
-
-
-public:
-
-    bool rotation(int direction_, char dir_rotation = 'O',
+private:
+    void rotation(int direction_, char dir_rotation = 'O',
         int  degrees_from_act_to_target_pos = 0) {
         /// <summary>
         /// 
@@ -1982,15 +1941,14 @@ public:
         /// <returns></returns>
         //vector<int> separated_degrees_if_more_than_90;
         int separated_degrees_if_more_than_90[3] = { 0,0,0 };
-        ROBOT_X_STEP = 0;
-        ROBOT_Y_STEP = 0;
-        ROBOT_THETA_STEP = 0;
-        rpm_L = 0.0;
-        rpm_R = 0.0;
+        ROBOT_X_STEP = 0.;
+        ROBOT_Y_STEP = 0.;
+        ROBOT_THETA_STEP = 0.;
         ekf_step.restart_calculation();
         while (true) {
             if ((ROBOT_THETA * rad_to_deg) == direction_) {
-                return true;
+                //return true;
+                break;
             }
             else {
                 //// step 30 degrees [90,90,3]
@@ -2000,7 +1958,7 @@ public:
                 if ((degrees_from_act_to_target_pos % step_) == 0) {
                     for (int i = 0; i < delimo; i++) {
                         //separated_degrees_if_more_than_90.push_back(step);
-                        separated_degrees_if_more_than_90[i] = step_;
+                        separated_degrees_if_more_than_90[i] = (double)step_;
                     }
                 }
 
@@ -2018,8 +1976,6 @@ public:
                     ROBOT_X_STEP = 0;
                     ROBOT_Y_STEP = 0;
                     ROBOT_THETA_STEP = 0;
-                    rpm_L = 0.0;
-                    rpm_R = 0.0;
                     ekf_step.restart_calculation();
                     if (angle == 0) {
                         continue;
@@ -2050,8 +2006,6 @@ public:
                             ROBOT_X_STEP = 0;
                             ROBOT_Y_STEP = 0;
                             ROBOT_THETA_STEP = 0;
-                            rpm_L = 0.0;
-                            rpm_R = 0.0;
                             ekf_step.restart_calculation();
                             actuator(2, 0, 0);
                             break;
@@ -2086,7 +2040,7 @@ public:
 
             }
 
-            return true;
+            // return true;
 
         }
 
@@ -2113,25 +2067,18 @@ public:
         ROBOT_X_ROTATION = 0;
         ROBOT_Y_ROTATION = 0;
         ROBOT_THETA_ROTATION = 0;
-        rpm_L = 0.0;
-        rpm_R = 0.0;
         ekf_step.restart_calculation();
         //dist_cm_L
         ROBOT_LAST_TRAVELED_DISTANCE = ROBOT_CURRENT_TRAVELED_DISTANCE;
-        bool ok_ = rotation(direction_, dir_rotation, degrees_from_act_to_target_pos);
+        //bool ok_ = rotation(direction_, dir_rotation, degrees_from_act_to_target_pos);
+
         if (ok_ == true) {
             ROBOT_LAST_TRAVELED_DISTANCE = ROBOT_CURRENT_TRAVELED_DISTANCE;
             ROBOT_X_ROTATION = 0;
             ROBOT_Y_ROTATION = 0;
             ROBOT_THETA_ROTATION = 0;
             ekf_rot.restart_calculation_rotation();
-            rpm_L = 0.0;
-            rpm_R = 0.0;
-            start_rotation = false;
-            
             while (true) {
-                
-                
                 curTime = millis();
                 if (curTime - prevTime >= intervalTime) { //400 ms or less make 100ms
                     ///////// SYNCHRONISATION !!!!! /////////////////
@@ -2141,17 +2088,11 @@ public:
                     batery_measuring(); // 2.1 battery update
                     odo.calculation_position(rpm_L, rpm_R, speed_time_factor, ROBOT_X, ROBOT_Y, ROBOT_THETA); // full                
                     ekf_b.calculation_ekf(odo.position_full, speed_time_factor, rpm_L, rpm_R);
-                    
-            
+
                     odo_rot.calculation_position_rotation(rpm_L, rpm_R, speed_time_factor, ROBOT_X_ROTATION, ROBOT_Y_ROTATION, ROBOT_THETA_ROTATION); //rotation             
                     ekf_rot.calculation_step(odo_rot.position_rotation, speed_time_factor, rpm_L, rpm_R);
-                    /*Serial.print("move-> X: ");
-                    Serial.print(odo_rot.position_rotation[0]);
-                    Serial.print(" Y: ");
-                    Serial.print(odo_rot.position_rotation[1]);
-                    Serial.print(" theta : ");
-                    Serial.println(odo_rot.position_rotation[2]* rad_to_deg);*/
-                    //prevTime = curTime;   // update the time 
+
+                    prevTime = curTime;   // update the time 
 
 
                     if (ROBOT_LAST_TRAVELED_DISTANCE == 0 and distance == 0) {
@@ -2161,29 +2102,21 @@ public:
                         new_distance_this_step =
                             ROBOT_CURRENT_TRAVELED_DISTANCE - ROBOT_LAST_TRAVELED_DISTANCE;
                     }
-                    /*Serial.print("new dist: ");
-                    Serial.print(new_distance_this_step);
-                    Serial.print("last: ");
-                    Serial.print(ROBOT_LAST_TRAVELED_DISTANCE);
-                    Serial.print("current: ");
-                    Serial.println(ROBOT_CURRENT_TRAVELED_DISTANCE);*/
-                   
+                    //Serial.print("new dist: ");
+                   // Serial.println(new_distance_this_step);
 
                     if (new_distance_this_step >= distance || (distance == 0)) {
                         //arived
                         ROBOT_LAST_TRAVELED_DISTANCE = ROBOT_CURRENT_TRAVELED_DISTANCE;
                         actuator(2, 0, 0); //stop the car
-                        Serial.print("achieved");                       
                         break;
                     }
                     else if (new_distance_this_step < distance) {
                         output_straight_line(); //calculate PID straight line  
-                        //Serial.print("teta deg : ");
-                        //Serial.println(ROBOT_THETA_ROTATION * rad_to_deg);
+                        Serial.print("teta deg : ");
+                        Serial.println(ROBOT_THETA_ROTATION * rad_to_deg);
                         actuator(1, PID_STRAIGHT_OUTPUT_L, PID_STRAIGHT_OUTPUT_R);
                     }
-
-                    //
 
                 }
 
@@ -2195,6 +2128,30 @@ public:
         ROBOT_ARRIVED = true; //return to Jetson, that command is done
         //update main variables
 
+
+    }
+
+
+
+
+public:
+    
+
+   
+
+
+
+    void move_command(int direction_, int distance, char dir_rotation = 'O',
+        int  degrees_from_act_to_target_pos = 0) {
+
+        //1. rotate to wished degrees
+        rotation(direction_, dir_rotation, degrees_from_act_to_target_pos);
+        Serial.println("END rotation");
+        //2. move ahead to wished distance
+        move_one_step(direction_, distance, dir_rotation, degrees_from_act_to_target_pos);
+        Serial.println("END move");
+        //loop();
+        
 
     }
 
@@ -2286,51 +2243,17 @@ void setup() {
     pinMode(in_4, OUTPUT);
     ///// DC //////////////////////////
     Serial.println(" End setup");
+    
 }
 
-
+BODY bod; //main class
 void loop() {
+    
 
 
-    //ODOMETRY odom;// 3 odometry full
-    //KalmanOdometry ko;//kalman odometry improve the results
-    //ODOMETRY_ROTATION odom_rot; // odometry rotation
-    //KalmanStep ks; // kalman step
-    //BODY bod; //main class
-    //
-    //
-    //curTime = millis();
-    //if (curTime - prevTime >= intervalTime) { //400 ms or less make 100ms
-    //    ///////// SYNCHRONISATION !!!!! /////////////////
-    //    info_from_jetson();
-    //    speed_calculation(); //1 speed calculation
-    //    calculation_traveled_distance(); // 2 distance calculation
-    //    batery_measuring(); // 2.1 battery update
-    //    odom.calculation_position(rpm_L, rpm_R, speed_time_factor, ROBOT_X, ROBOT_Y, ROBOT_THETA); // full
-    //    odom_rot.calculation_position_rotation(rpm_L, rpm_R, speed_time_factor, ROBOT_X_ROTATION, ROBOT_Y_ROTATION, ROBOT_THETA_ROTATION); //rotation
-    //    Serial.print("full Theta :  ");
-    //    Serial.println(odom.position_full[2]);
-    //    Serial.print("  rot Theta :  ");
-    //    Serial.println(odom_rot.position_rotation[2]);
-    //    ko.calculation_ekf(odom.position_full, speed_time_factor, rpm_L, rpm_R);
-    //    Serial.print("  full theta after ekf  :  ");
-    //    Serial.println(ko.state_estimate_k_updated[2]);
-
-
-    //    ks.calculation_step(odom_rot.position_rotation, speed_time_factor, rpm_L, rpm_R);
-    //    Serial.print("  rot theta after ekf  :  ");
-    //    Serial.println(ks.state_estimate_k_updated_step[2]);
-
-    //    prevTime = curTime;   // update the time 
-
-    //}
-
-    // run robot with command from Jetson
-    BODY bod; //main class
-    ////bod.move_one_step(TARGET_ORIENTATION_JETSON, DISTANCE_JETSON, DIRECTION, DIFFERENCE_ANGLE_JETSON);
-    if (ROBOT_ARRIVED == false) {
-        double winkel = 90;
-        bod.move_one_step(winkel, 100, 'R', winkel); // (deg,dist,L/R,diff)
+    
+        double winkel = 0;
+        bod.move_command(winkel, 20, 'R', winkel); // (deg,dist,L/R,diff)
         Serial.print(" X: ");
         Serial.print(ROBOT_X);
         Serial.print("  Y: ");
@@ -2342,104 +2265,25 @@ void loop() {
         Serial.print(" BAT: ");
         Serial.print(BAT);
 
+        bod.move_command(winkel, 40, 'R', winkel); // (deg,dist,L/R,diff)
+        Serial.print(" X: ");
+        Serial.print(ROBOT_X);
+        Serial.print("  Y: ");
+        Serial.print(ROBOT_Y);
+        Serial.print("  Theta deg: ");
+        Serial.print(ROBOT_THETA * rad_to_deg);
+        Serial.println();
 
-
-
-        //ROBOT_ARRIVED = false;
-        //bod.move_one_step(0, 20,'R',0); // (deg,dist,L/R,diff)
-        //Serial.print(" X: ");
-        //Serial.print(ROBOT_X);
-        //Serial.print("  Y: ");
-        //Serial.print(ROBOT_Y);
-        //Serial.print("  Theta deg: ");
-        //Serial.print(ROBOT_THETA * rad_to_deg);
-        //Serial.println();
-    }
-    //actuator(2, 0, 0);
-
-
-    /////////////////////// DEBUG HERE ////////////////////////////////////////////// 
-
-
-
-    //actuator(1, 40, 40);
-
-    //ODOMETRY odom;// 3 odometry full
-    //KalmanOdometry ko;//kalman odometry improve the results
-    //ODOMETRY_ROTATION odom_rot; // odometry rotation
-    //KalmanStep ks; // kalman step
-
-
-    //info_from_jetson();
-    //curTime = millis();
-    //if (curTime - prevTime >= intervalTime) { //400 ms or less make 100ms
-    //    ///////// SYNCHRONISATION !!!!! /////////////////
-    //    speed_calculation(); //1 speed calculation
-    //    calculation_traveled_distance(); // 2 distance calculation
-    //    batery_measuring(); // 2.1 battery update
-    //    
-    //    //odom_rot.calculation_position_rotation(rpm_L, rpm_R, speed_time_factor, ROBOT_X_ROTATION, ROBOT_Y_ROTATION, ROBOT_THETA_ROTATION); //rotation
-    //    //Serial.print("Theta :  ");
-    //    //Serial.println(odom.position_full[2]);
-    //    //Serial.print("  rot Theta :  ");
-    //    //Serial.println(odom_rot.position_rotation[2]);
-    //    //double a[3] = { ROBOT_X, ROBOT_Y, ROBOT_THETA };
-    //    odom.calculation_position(rpm_L, rpm_R, speed_time_factor, ROBOT_X, ROBOT_Y, ROBOT_THETA); // full
-    //    Serial.print(" X: ");
-    //    Serial.print(odom.position_full[0]);
-    //    Serial.print("  Y: ");
-    //    Serial.print(odom.position_full[1]);
-    //    Serial.print("  Theta deg: ");
-    //    Serial.print(odom.position_full[2] * rad_to_deg);
-    //    Serial.println();
-
-    //    ko.calculation_ekf(odom.position_full, speed_time_factor, rpm_L, rpm_R);
-    //    Serial.print("ekf X: ");
-    //    Serial.print(ROBOT_X);
-    //    Serial.print("  Y: ");
-    //    Serial.print(ROBOT_Y);
-    //    Serial.print("  Theta deg: ");
-    //    Serial.print(ROBOT_THETA * rad_to_deg);
-    //    Serial.println();
-    //    
-    //   
-    //    //Serial.print("  ekf  :  ");
-    //    //Serial.println(ko.state_estimate_k_updated[2]);
-
-
-    //    //ks.calculation_step(odom_rot.position_rotation, speed_time_factor, rpm_L, rpm_R);
-    //    //Serial.print("  rot theta after ekf  :  ");
-    //    //Serial.println(ks.state_estimate_k_updated_step[2]);
-
-    //    prevTime = curTime;   // update the time 
-
-    //}
-
-    /*Serial.print("l:  ");
-    Serial.print(countPulsesL);
-    Serial.print("  r  :  ");
-    Serial.println(countPulsesR);*/
-
-    /*Serial.print(" X: ");
-    Serial.print(ROBOT_X);
-    Serial.print("  Y: ");
-    Serial.print(ROBOT_Y);
-    Serial.print("  Theta deg: ");
-    Serial.print(ROBOT_THETA * rad_to_deg);
-    Serial.println();*/
-
-    /* Serial.print(" X: ");
-     Serial.print(ROBOT_X);
-     Serial.print("  Y: ");
-     Serial.print(ROBOT_Y);
-     Serial.print("  Theta deg: ");
-     Serial.print(ROBOT_THETA * rad_to_deg);
-     Serial.println();*/
+        Serial.print(" BAT: ");
+        Serial.print(BAT);
+        
 
 
 
 
-
+        
+    
+   
 }
 
 ////////////////////////////// END LOOP //////////////////////////////////////////////////////////////
@@ -2595,11 +2439,10 @@ void calculation_traveled_distance() {
     /// calcualtion the distance and store it into  dist_cm_L and dist_cm_R
     //ROBOT_CURRENT_TRAVELED_DISTANCE 
     //ROBOT_LAST_TRAVELED_DISTANCE 
-    dist_cm_L = (double)(((sum_pulses_L / leftRev) * wheel_round) );
-    dist_cm_R = (double)(((sum_pulses_R / rightRev) * wheel_round));
-    
+    dist_cm_L = ((sum_pulses_L / leftRev) * wheel_round);
+    dist_cm_R = ((sum_pulses_R / rightRev) * wheel_round);
 
-    ROBOT_CURRENT_TRAVELED_DISTANCE = ((dist_cm_L + dist_cm_R) / 2.0);
+    ROBOT_CURRENT_TRAVELED_DISTANCE = (dist_cm_L + dist_cm_R) / 2;
     Serial.print(" new dist: ");
     Serial.print(ROBOT_CURRENT_TRAVELED_DISTANCE);
     Serial.print(" L ");
@@ -2610,8 +2453,8 @@ void calculation_traveled_distance() {
 }
 
 void speed_calculation() {
-    rpm_L = (double)(((countPulsesL / leftRev) * 60.0) / (speed_time_factor)); //0.4
-    rpm_R = (double)(((countPulsesR / rightRev) * 60.0) / (speed_time_factor));
+    rpm_L = (double)(((countPulsesL / leftRev) * 60) / (speed_time_factor)); //0.4
+    rpm_R = (double)(((countPulsesR / rightRev) * 60) / (speed_time_factor));
 
     ang_velocity_L = rpm_L * rpm_to_radians;
     ang_velocity_deg_L = ang_velocity_L * rad_to_deg;
@@ -2681,8 +2524,6 @@ void output_straight_line() {
     THETA_PID_R.Compute(); // calculate PID theta error
     //Serial.print("theta output l: ");
     //Serial.println(theta_pid_output_l);
-    /*Serial.print("theta in PID");
-    Serial.print(ROBOT_THETA_ROTATION);*/
 
     if (ROBOT_THETA_ROTATION == 0) {
         final_speed_l = SPEED_L_target;

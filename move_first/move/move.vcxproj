@@ -148,6 +148,7 @@
     <ClInclude Include="19_02_23.h" />
     <ClInclude Include="20_02_23.h" />
     <ClInclude Include="20_02_23_float.h" />
+    <ClInclude Include="22_02_23.h" />
     <ClInclude Include="Arduino.h" />
     <ClInclude Include="Graph_helper.h" />
     <ClInclude Include="helper_odometry_class.h" />
