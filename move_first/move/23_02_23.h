@@ -18,6 +18,8 @@ double ROBOT_LAST_TRAVELED_DISTANCE = 0;
 
 bool ROBOT_ARRIVED = false;
 
+bool start_straight = false;
+
 //////////////////////////////////////////////////
 //////////////////////////////////////////////////
 //////////////////////////////////////////////////
@@ -303,16 +305,33 @@ public:
 
     }
 
+    //double omega = 0.0;
+    //double R = 0.0;
+
     double position_full[3]{ 0,0,0 }; //use this in odometry x,y,theta
     //double position_rotation[3]{ 0,0,0 }; //use this in roatation
     void calculation_position(double vel_l, double vel_r,
         double delta_time, double curr_x, double curr_y, double curr_theta) {
         vel_l *= rpm_to_radians;
         vel_r *= rpm_to_radians;
+
+       /* if (start_straight != false) {
+            omega = calculation_omega(vel_l, vel_r, delta_time);
+            R = width_of_car / 2.0 * ((vel_r + vel_l) / (vel_l - vel_r));
+
+        }
+        else {
+            omega = 0.0;
+            R = 0.0;
+            rpm_L = 0.0;
+            rpm_R = 0.0;
+
+        }*/
+        
         //curr_theta = curr_theta * (3.1415 / 180);;
         double omega = calculation_omega(vel_l, vel_r, delta_time);
 
-        double R = 0;
+       double R = 0;
         if (vel_l != vel_r) {
             R = width_of_car / 2.0 * ((vel_r + vel_l) / (vel_l - vel_r));
         }
@@ -354,6 +373,7 @@ public:
         /*ROBOT_X = position_full[0];
         ROBOT_Y = position_full[1];
         ROBOT_THETA = position_full[2];*/
+        //start_straight = true;
 
 
 
@@ -1978,13 +1998,13 @@ private:
 
                         }
                         double current_angle_deg_ekf = ROBOT_THETA_STEP * rad_to_deg; //degrees
-                        Serial.print(" angle turning: ");
-                        Serial.println(current_angle_deg_ekf);
+                        //Serial.print(" angle turning: ");
+                        //Serial.println(current_angle_deg_ekf);
 
                         if (current_angle_deg_ekf >= (angle)) {
                             ROBOT_THETA = direction_*deg_to_rad;
-                            ROBOT_X = ROBOT_X_STEP;
-                            ROBOT_Y = ROBOT_Y_STEP;
+                            //ROBOT_X = ROBOT_X_STEP;
+                            //ROBOT_Y = ROBOT_Y_STEP;
 
                             ROBOT_X_STEP = 0;
                             ROBOT_Y_STEP = 0;
@@ -2046,6 +2066,8 @@ private:
         ROBOT_ARRIVED = false;
         sum_pulses_L = 0.0; //restart distance measuring
         sum_pulses_R = 0.0;
+        rpm_L = 0.0;
+        rpm_R = 0.0;
         double new_distance_this_step = 0;
         ROBOT_X_ROTATION = 0;
         ROBOT_Y_ROTATION = 0;
@@ -2093,8 +2115,8 @@ private:
                 }
                 else if (new_distance_this_step < distance_) {
                     output_straight_line(); //calculate PID straight line  
-                    Serial.print("teta deg : ");
-                    Serial.println(ROBOT_THETA_ROTATION * rad_to_deg);
+                    //Serial.print("teta deg : ");
+                    //Serial.println(ROBOT_THETA_ROTATION * rad_to_deg);
                     actuator(1, PID_STRAIGHT_OUTPUT_L, PID_STRAIGHT_OUTPUT_R);
                 }
 
@@ -2222,20 +2244,27 @@ void setup() {
 
 BODY bod; //main class
 void loop() {
-    Serial.println(" Enter loop");
-    int winkel = 90;
-    bod.move_command(winkel, 30, 'R', winkel); // (deg,dist,L/R,diff)
-    Serial.print(" X: ");
-    Serial.print(ROBOT_X);
-    Serial.print("  Y: ");
-    Serial.print(ROBOT_Y);
-    Serial.print("  Theta deg: ");
-    Serial.print(ROBOT_THETA * rad_to_deg);
-    Serial.println();
-    delay(2000);
 
-    //Serial.print(" BAT: ");
-    //Serial.print(BAT);
+    //Serial.println(" Enter loop");
+    int winkel = 90;
+    if (ROBOT_ARRIVED == false) {
+        bod.move_command(winkel, 50, 'R', winkel); // (deg,dist,L/R,diff)
+        Serial.print(" X: ");
+        Serial.print(ROBOT_X);
+        Serial.print("  Y: ");
+        Serial.print(ROBOT_Y);
+        Serial.print("  Theta deg: ");
+        Serial.print(ROBOT_THETA * rad_to_deg);
+        Serial.println();
+        Serial.print(" BAT: ");
+        Serial.print(BAT);
+        ROBOT_ARRIVED = false;
+
+    }
+    
+    
+
+    
 
    
     
