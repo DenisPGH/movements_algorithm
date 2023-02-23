@@ -2,5 +2,63 @@
 C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\inverse_matrix.h(16,15): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
 C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\Arduino.h(45,21): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
 C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\Arduino.h(45,14): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\move.cpp(265,29): warning C4305: 'argument': truncation from 'double' to 'float'
-  move.vcxproj -> C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\Debug\move.exe
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\PID_rotation.h(25,3): error C2065: 'PID': undeclared identifier
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\PID_rotation.h(25,7): error C2146: syntax error: missing ';' before identifier 'ROTATION_PID_L'
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\PID_rotation.h(25,117): error C2065: 'DIRECT': undeclared identifier
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\PID_rotation.h(25,7): error C3861: 'ROTATION_PID_L': identifier not found
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\PID_rotation.h(26,3): error C2065: 'PID': undeclared identifier
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\PID_rotation.h(26,7): error C2146: syntax error: missing ';' before identifier 'ROTATION_PID_R'
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\PID_rotation.h(26,117): error C2065: 'DIRECT': undeclared identifier
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\PID_rotation.h(26,7): error C3861: 'ROTATION_PID_R': identifier not found
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\PID_rotation.h(30,3): error C2065: 'ROTATION_PID_L': undeclared identifier
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\PID_rotation.h(30,34): error C2065: 'PID_MIN_LIMIT': undeclared identifier
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\PID_rotation.h(30,49): error C2065: 'PID_MAX_LIMIT': undeclared identifier
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\PID_rotation.h(31,3): error C2065: 'ROTATION_PID_L': undeclared identifier
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\PID_rotation.h(31,26): error C2065: 'AUTOMATIC': undeclared identifier
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\PID_rotation.h(32,3): error C2065: 'ROTATION_PID_L': undeclared identifier
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\PID_rotation.h(32,32): error C2065: 'PID_SAMPLE_TIME_IN_MILLI_L': undeclared identifier
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\PID_rotation.h(34,3): error C2065: 'ROTATION_PID_R': undeclared identifier
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\PID_rotation.h(34,34): error C2065: 'PID_MIN_LIMIT': undeclared identifier
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\PID_rotation.h(34,49): error C2065: 'PID_MAX_LIMIT': undeclared identifier
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\PID_rotation.h(35,3): error C2065: 'ROTATION_PID_R': undeclared identifier
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\PID_rotation.h(35,26): error C2065: 'AUTOMATIC': undeclared identifier
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\PID_rotation.h(36,3): error C2065: 'ROTATION_PID_R': undeclared identifier
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\PID_rotation.h(36,32): error C2065: 'PID_SAMPLE_TIME_IN_MILLI_R': undeclared identifier
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\PID_rotation.h(45,3): error C2065: 'ROTATION_PID_L': undeclared identifier
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\PID_rotation.h(46,3): error C2065: 'ROTATION_PID_R': undeclared identifier
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\kalman_step.h(71,22): error C2011: 'KalmanRotation': 'class' type redefinition
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\kalman_rotation.h(5): message : see declaration of 'KalmanRotation'
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\move.cpp(58,20): error C2079: 'Body::ekf_r' uses undefined class 'KalmanRotation'
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\move.cpp(59,20): error C2079: 'Body::ekf_step' uses undefined class 'KalmanRotation'
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\move.cpp(207,45): error C2039: 'output': is not a member of 'PID_Rotation'
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\PID_rotation.h(5): message : see declaration of 'PID_Rotation'
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\move.cpp(208,56): error C2039: 'left_motor_output': is not a member of 'PID_Rotation'
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\PID_rotation.h(5): message : see declaration of 'PID_Rotation'
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\move.cpp(209,56): error C2039: 'right_motor_output': is not a member of 'PID_Rotation'
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\PID_rotation.h(5): message : see declaration of 'PID_Rotation'
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\move.cpp(244,9): error C2065: 'ROBOT_X_ROTATION': undeclared identifier
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\move.cpp(245,9): error C2065: 'ROBOT_Y_ROTATION': undeclared identifier
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\move.cpp(246,9): error C2065: 'ROBOT_THETA_ROTATION': undeclared identifier
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\move.cpp(249,9): error C2065: 'ROBOT_LAST_TRAVELED_DISTANCE': undeclared identifier
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\move.cpp(249,40): error C2065: 'ROBOT_CURRENT_TRAVELED_DISTANCE': undeclared identifier
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\move.cpp(250,1): error C2660: 'Body::rotation': function does not take 4 arguments
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\move.cpp(129,10): message : see declaration of 'Body::rotation'
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\move.cpp(252,13): error C2065: 'ROBOT_LAST_TRAVELED_DISTANCE': undeclared identifier
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\move.cpp(252,44): error C2065: 'ROBOT_CURRENT_TRAVELED_DISTANCE': undeclared identifier
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\move.cpp(253,13): error C2065: 'ROBOT_X_ROTATION': undeclared identifier
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\move.cpp(254,13): error C2065: 'ROBOT_Y_ROTATION': undeclared identifier
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\move.cpp(255,13): error C2065: 'ROBOT_THETA_ROTATION': undeclared identifier
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\move.cpp(258,21): error C2065: 'ROBOT_LAST_TRAVELED_DISTANCE': undeclared identifier
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\move.cpp(259,46): error C2065: 'ROBOT_CURRENT_TRAVELED_DISTANCE': undeclared identifier
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\move.cpp(263,25): error C2065: 'ROBOT_CURRENT_TRAVELED_DISTANCE': undeclared identifier
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\move.cpp(263,59): error C2065: 'ROBOT_LAST_TRAVELED_DISTANCE': undeclared identifier
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\move.cpp(268,21): error C2065: 'ROBOT_LAST_TRAVELED_DISTANCE': undeclared identifier
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\move.cpp(268,52): error C2065: 'ROBOT_CURRENT_TRAVELED_DISTANCE': undeclared identifier
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\move.cpp(273,33): error C2065: 'PID_STRAIGHT_OUTPUT_L': undeclared identifier
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\move.cpp(273,56): error C2065: 'PID_STRAIGHT_OUTPUT_R': undeclared identifier
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\move.cpp(273,21): error C3861: 'actuator': identifier not found
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\move.cpp(281,9): error C3861: 'actuator': identifier not found
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\move.cpp(283,9): error C2065: 'ROBOT_ARIVED': undeclared identifier
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\move.cpp(311,29): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\move.cpp(356,35): error C2660: 'Body::move_one_step': function does not take 4 arguments
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\move.cpp(231,10): message : see declaration of 'Body::move_one_step'
