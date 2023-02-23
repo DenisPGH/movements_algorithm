@@ -1978,9 +1978,11 @@ private:
 
                         }
                         double current_angle_deg_ekf = ROBOT_THETA_STEP * rad_to_deg; //degrees
+                        Serial.print(" angle turning: ");
+                        Serial.println(current_angle_deg_ekf);
 
                         if (current_angle_deg_ekf >= (angle)) {
-                            ROBOT_THETA = direction_ * deg_to_rad;
+                            ROBOT_THETA = direction_*deg_to_rad;
                             ROBOT_X = ROBOT_X_STEP;
                             ROBOT_Y = ROBOT_Y_STEP;
 
@@ -2078,7 +2080,7 @@ private:
                 }
                 else {
                     new_distance_this_step =
-                        ROBOT_CURRENT_TRAVELED_DISTANCE - ROBOT_LAST_TRAVELED_DISTANCE;
+                        ROBOT_CURRENT_TRAVELED_DISTANCE; // -ROBOT_LAST_TRAVELED_DISTANCE;
                 }
                 //Serial.print("new dist: ");
                // Serial.println(new_distance_this_step);
@@ -2091,8 +2093,8 @@ private:
                 }
                 else if (new_distance_this_step < distance_) {
                     output_straight_line(); //calculate PID straight line  
-                    /*Serial.print("teta deg : ");
-                    Serial.println(ROBOT_THETA_ROTATION * rad_to_deg);*/
+                    Serial.print("teta deg : ");
+                    Serial.println(ROBOT_THETA_ROTATION * rad_to_deg);
                     actuator(1, PID_STRAIGHT_OUTPUT_L, PID_STRAIGHT_OUTPUT_R);
                 }
 
@@ -2222,7 +2224,7 @@ BODY bod; //main class
 void loop() {
     Serial.println(" Enter loop");
     int winkel = 90;
-    bod.move_command(winkel, 100, 'R', winkel); // (deg,dist,L/R,diff)
+    bod.move_command(winkel, 30, 'R', winkel); // (deg,dist,L/R,diff)
     Serial.print(" X: ");
     Serial.print(ROBOT_X);
     Serial.print("  Y: ");
@@ -2230,14 +2232,12 @@ void loop() {
     Serial.print("  Theta deg: ");
     Serial.print(ROBOT_THETA * rad_to_deg);
     Serial.println();
+    delay(2000);
 
     //Serial.print(" BAT: ");
     //Serial.print(BAT);
 
-   /* Serial.print(" L ");
-    Serial.print(countPulsesL);
-    Serial.print(" R  ");
-    Serial.println(countPulsesR);*/
+   
     
        
        
@@ -2397,12 +2397,12 @@ void calculation_traveled_distance() {
     dist_cm_R = (double)((sum_pulses_R / rightRev) * wheel_round);
 
     ROBOT_CURRENT_TRAVELED_DISTANCE = (dist_cm_L + dist_cm_R) / 2.0;
-    Serial.print(" new dist: ");
+    /*Serial.print(" new dist: ");
     Serial.print(ROBOT_CURRENT_TRAVELED_DISTANCE);
     Serial.print(" L ");
     Serial.print(dist_cm_L);
     Serial.print(" R  ");
-    Serial.println(dist_cm_R);
+    Serial.println(dist_cm_R);*/
 
 }
 
