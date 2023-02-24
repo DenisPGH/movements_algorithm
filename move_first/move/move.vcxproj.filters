@@ -77,5 +77,8 @@
     <ClInclude Include="23_02_23.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="24_02_23.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
