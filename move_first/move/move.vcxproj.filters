@@ -80,5 +80,8 @@
     <ClInclude Include="24_02_23.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="25_02_23.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
