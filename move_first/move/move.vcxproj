@@ -152,6 +152,7 @@
     <ClInclude Include="23_02_23.h" />
     <ClInclude Include="24_02_23.h" />
     <ClInclude Include="25_02_23.h" />
+    <ClInclude Include="25_02_23_kalman_tests.h" />
     <ClInclude Include="Arduino.h" />
     <ClInclude Include="Graph_helper.h" />
     <ClInclude Include="helper_odometry_class.h" />
