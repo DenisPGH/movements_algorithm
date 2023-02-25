@@ -262,7 +262,7 @@ int LED_STATUS_JETSON = 0;
 int DISTANCE_JETSON = 0;
 int TARGET_ORIENTATION_JETSON = 0;
 int DIFFERENCE_ANGLE_JETSON = 0;
-char DIRECTION = 'O';
+int DIRECTION = 0;
 
 char jetson[40];
 //////////////////////// I2c stop //////////////////////////////////////////////
@@ -891,8 +891,8 @@ public:
         position_rotation[0] = result[0] + B[0];
         position_rotation[1] = result[1] + B[1];
         position_rotation[2] = result[2] + B[2];
-        Serial.print("rot theta= ");
-        Serial.println(position_rotation[2] * rad_to_deg);
+        //Serial.print("rot theta= ");
+        //Serial.println(position_rotation[2] * rad_to_deg);
 
 
         //Serial.print("position_rotation[2] : ");
@@ -1942,11 +1942,9 @@ class BODY {
 
     ODOMETRY_STEP odo_step;
     KalmanSTEP ekf_step;
-    bool ok_ = true;
-    double copy_theta = 0.0;
 
 private:
-    void rotation(int direction_, char dir_rotation = 'O',
+    void rotation(int direction_, int dir_rotation = 0,
         int  degrees_from_act_to_target_pos = 0) {
         /// <summary>
         /// 
@@ -2019,9 +2017,7 @@ private:
 
                         if (abs(current_angle_deg_ekf) >= (angle)) {
                             ROBOT_THETA = direction_ * deg_to_rad;
-                            copy_theta = ROBOT_THETA;
-
-
+                            
                             ROBOT_X_STEP = 0;
                             ROBOT_Y_STEP = 0;
                             ROBOT_THETA_STEP = 0;
@@ -2043,10 +2039,10 @@ private:
                             Serial.print("  R : ");
                             Serial.println(PID_ROTATION_OUTPUT_R);*/
 
-                            if (dir_rotation == 'L') {
+                            if (dir_rotation == 3) { //'L'
                                 actuator(3, PID_ROTATION_OUTPUT_L + 20, PID_ROTATION_OUTPUT_R + 23);
                             }
-                            else if (dir_rotation == 'R') {
+                            else if (dir_rotation == 4) { //'R'
                                 actuator(4, PID_ROTATION_OUTPUT_L + 23, PID_ROTATION_OUTPUT_R + 23);
                             }
 
@@ -2140,6 +2136,8 @@ private:
                     //arived
                     ROBOT_LAST_TRAVELED_DISTANCE = ROBOT_CURRENT_TRAVELED_DISTANCE;
                     actuator(2, 0, 0); //stop the car
+                    ROBOT_ARRIVED = true;
+                   
                     break;
                 }
                 else if (new_distance_this_step < distance_) {
@@ -2154,7 +2152,7 @@ private:
         }
 
         actuator(2, 0, 0); //stop the car
-        ROBOT_ARRIVED = true; //return to Jetson, that command is done
+        //ROBOT_ARRIVED = true; //return to Jetson, that command is done
         //update main variables
 
 
@@ -2168,11 +2166,11 @@ public:
 
     void move_command(int direction_, int distance, char dir_rotation = 'O',
         int  degrees_from_act_to_target_pos = 0) {
-
         //1. rotate to wished degrees
         rotation(direction_, dir_rotation, degrees_from_act_to_target_pos);
         //2. move ahead to wished distance
         move_one_step(distance);
+        
 
     }
 
@@ -2271,27 +2269,48 @@ BODY bod; //main class
 int counter = 0;
 void loop() {
 
-        int winkel = 90;
-        int diff = 90;
-        if (ROBOT_ARRIVED == false) {
-            bod.move_command(winkel, 30, 'R', diff); // (deg,dist,L/R,diff)
-            Serial.print(" X: ");
-            Serial.print(ROBOT_X);
-            Serial.print("  Y: ");
-            Serial.print(ROBOT_Y);
-            Serial.print("  Theta deg: ");
-            Serial.print(ROBOT_THETA * rad_to_deg);
-            Serial.println();
+        //int winkel = 90;
+        //int diff = 90;
+        //if (ROBOT_ARRIVED == false) {
+        //    bod.move_command(winkel, 30, 'R', diff); // (deg,dist,L/R,diff)
+        //    Serial.print(" X: ");
+        //    Serial.print(ROBOT_X);
+        //    Serial.print("  Y: ");
+        //    Serial.print(ROBOT_Y);
+        //    Serial.print("  Theta deg: ");
+        //    Serial.print(ROBOT_THETA * rad_to_deg);
+        //    Serial.println();
 
-        }
+        //}
         
+    ROBOT_ARRIVED = false;
+    info_from_jetson();
+    if (mode == 1) {
+        bod.move_command(
+            TARGET_ORIENTATION_JETSON,
+            DISTANCE_JETSON,
+            DIRECTION,
+            DIFFERENCE_ANGLE_JETSON);
 
-    /*bod.move_command(
-        TARGET_ORIENTATION_JETSON,
-        DISTANCE_JETSON,
-        DIRECTION,
-        DIFFERENCE_ANGLE_JETSON);
-    */
+    }
+    
+    
+    /*Serial.print("Jetson:  ");
+    Serial.print(TARGET_ORIENTATION_JETSON);
+    Serial.print("  ");
+    Serial.print(DISTANCE_JETSON);
+
+    Serial.print("  ");
+    Serial.print(DIRECTION);
+    Serial.print("  ");
+    Serial.print(DIFFERENCE_ANGLE_JETSON);
+
+    Serial.print(" mode ");
+    Serial.print(mode);
+
+    Serial.print(" arrived: ");
+    Serial.println(ROBOT_ARRIVED);*/
+    
 
 }
 

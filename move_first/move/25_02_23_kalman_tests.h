@@ -1173,13 +1173,13 @@ private:
 
 
         //float result[3] = R_matrix @ A + B.T;
-        double result[3] = { 0,0,0 };
+        double result[3] = { 0.0,0.0,0.0 };
         //calculation the matrix
 
         for (int i = 0; i < 3; i++) { // All array elements
             result[i] = 0;
             for (int j = 0; j < 3; j++) {
-                result[j] += R_matrix[j][i] * A[i];
+                result[i] += R_matrix[j][i] * A[i];
             }
 
         }
