@@ -31,19 +31,19 @@ bool start_straight = false;
 const int MIN_L = 27; //30
 const int MIN_R = 30; //30
 
-const double Kp_L_theta = 28; // # 28
-const double Ki_L_theta = 97; //  # 97
-const double Kd_L_theta = 0.13; // # 0.15
+const double Kp_L_theta = 10; // # 28
+const double Ki_L_theta = 0; //  # 97
+const double Kd_L_theta = 0; // # 0.13
 
-const double Kp_R_theta = 35.6; // # 35.6
-const double Ki_R_theta = 88; // # 88
-const double Kd_R_theta = 1; // # 1
+const double Kp_R_theta = 10; // # 35.6
+const double Ki_R_theta = 0; // # 88
+const double Kd_R_theta = 0; // # 1
 
 const double Kp_L = 2.9; // # 2.9
 const double Ki_L = 0; // # 0
 const double Kd_L = 0; // # 0
 
-const double Kp_R = 3.25; // # 3.25
+const double Kp_R = 3.18; // # 3.25
 const double Ki_R = 0; //  # 0
 const double Kd_R = 0; // # 0
 
@@ -143,7 +143,7 @@ double theta_pid_output_l = 0; // output PID_L
 double theta_pid_output_r = 0; // output PID_R  kakvo chislo otiva kym motori
 
 
-const double SPEED = 20;
+const double SPEED = 25;
 double SPEED_L_target = SPEED; // #20
 double SPEED_R_target = SPEED; //
 
@@ -898,9 +898,9 @@ public:
         //Serial.print("position_rotation[2] : ");
         //Serial.println(position_rotation[2]);
 
-        /*ROBOT_X_ROTATION = position_rotation[0];
+        ROBOT_X_ROTATION = position_rotation[0];
         ROBOT_Y_ROTATION = position_rotation[1];
-        ROBOT_THETA_ROTATION = position_rotation[2];*/
+        ROBOT_THETA_ROTATION = position_rotation[2];
 
 
 
@@ -1332,9 +1332,9 @@ public:
             }
         }
 
-        ROBOT_THETA_ROTATION = 0;
-        ROBOT_X_ROTATION = 0;
-        ROBOT_Y_ROTATION = 0;
+        //ROBOT_THETA_ROTATION = 0;
+        //ROBOT_X_ROTATION = 0;
+        //ROBOT_Y_ROTATION = 0;
     }
 
 
@@ -1381,14 +1381,14 @@ public:
         /// <param name="curr_x"></param>
         /// <param name="curr_y"></param>
         /// <param name="curr_theta"> radians</param>
-        vel_l *= rpm_to_radians;
-        vel_r *= rpm_to_radians;
+        double vel_L= vel_l * rpm_to_radians;
+        double vel_R = vel_r * rpm_to_radians;
         //curr_theta = curr_theta * (3.1415 / 180);;
-        double omega = calculation_omega(vel_l, vel_r, delta_time);
+        double omega = calculation_omega(vel_L, vel_R, delta_time);
 
         double R = 0;
-        if (vel_l != vel_r) {
-            R = width_of_car / 2.0 * ((vel_r + vel_l) / (vel_l - vel_r));
+        if (vel_L != vel_R) {
+            R = width_of_car / 2.0 * ((vel_R + vel_L) / (vel_L - vel_R));
         }
         else { R = 0.0; }
 
@@ -1409,13 +1409,13 @@ public:
 
 
         //float result[3] = R_matrix @ A + B.T;
-        double result[3] = { 0,0,0 };
+        double result[3] = { 0.0,0.0,0.0 };
         //calculation the matrix
 
         for (int i = 0; i < 3; i++) { // All array elements
             result[i] = 0;
             for (int j = 0; j < 3; j++) {
-                result[j] += R_matrix[j][i] * A[i];
+                result[i] += R_matrix[j][i] * A[i];
             }
 
         }
@@ -1431,9 +1431,9 @@ public:
         //Serial.print("position_rotation[2] : ");
         //Serial.println(position_rotation[2]);
 
-        /*ROBOT_X_ROTATION = position_rotation[0];
-        ROBOT_Y_ROTATION = position_rotation[1];
-        ROBOT_THETA_ROTATION = position_rotation[2];*/
+        ROBOT_X_STEP = position_rotation_step[0];
+        ROBOT_Y_STEP = position_rotation_step[1];
+        ROBOT_THETA_STEP = position_rotation_step[2];
 
 
 
@@ -1471,16 +1471,16 @@ public:
     // R Sensor measurement noise covariance, if sure in R, R = 0
     double SENSOR_MEASURMENT_NOICE_X = 1.0;
     double SENSOR_MEASURMENT_NOICE_Y = 1.0;
-    double SENSOR_MEASURMENT_NOICE_THETA = 1;  // 1.0
+    double SENSOR_MEASURMENT_NOICE_THETA = 1.0;  // 1.0
     // Sensor noice
     double SENSOR_NOICE_X = -0.04; // - 0.04
     double SENSOR_NOICE_Y = 0.048; //0.049, 0.042
-    double SENSOR_NOICE_THETA = 0.0031;  //  + 0.0027,  which direction make noise
+    double SENSOR_NOICE_THETA = -0.01;  //  + 0.0027,  which direction make noise
 
     // estimation state, where the robot start
-    double ESTIMATET_STATE_LAST_X = ROBOT_X_STEP;
-    double ESTIMATET_STATE_LAST_Y = ROBOT_Y_STEP;
-    double ESTIMATET_STATE_LAST_THETA = ROBOT_THETA_STEP; //radians
+    double ESTIMATET_STATE_LAST_X = 0;
+    double ESTIMATET_STATE_LAST_Y = 0;
+    double ESTIMATET_STATE_LAST_THETA = 0; //radians
     double state_estimate_k_minus_1[3] = { ESTIMATET_STATE_LAST_X,
         ESTIMATET_STATE_LAST_Y,
         ESTIMATET_STATE_LAST_THETA }; // [meters, meters, radians]
@@ -1530,7 +1530,7 @@ class KalmanSTEP : public KalmanVariablesSTEP {
                     SENSOR_NOICE_Y,
                     SENSOR_NOICE_THETA };
 
-    double R_matrix[3][3];
+    double R_matrix[3][3] = { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };
     double prediction_ekf[3] = { 0,0,0 };
 
     double final_P_k[3][3] = { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };
@@ -1708,13 +1708,13 @@ private:
 
 
         //float result[3] = R_matrix @ A + B.T;
-        double result[3] = { 0,0,0 };
+        double result[3] = { 0.0,0.0,0.0 };
         //calculation the matrix
 
         for (int i = 0; i < 3; i++) { // All array elements
             result[i] = 0;
             for (int j = 0; j < 3; j++) {
-                result[j] += R_matrix[j][i] * A[i];
+                result[i] += R_matrix[j][i] * A[i];
             }
 
         }
@@ -2018,33 +2018,39 @@ private:
 
                         }
                         double current_angle_deg_ekf = ROBOT_THETA_STEP * rad_to_deg; //degrees
-                        //Serial.print(" angle turning: ");
-                        //Serial.println(current_angle_deg_ekf);
+                        Serial.print(" angle turning: ");
+                        Serial.print(current_angle_deg_ekf);
+                        Serial.print(" angle target: ");
+                        Serial.println(angle);
+                        
 
                         if (abs(current_angle_deg_ekf) >= (angle)) {
                             ROBOT_THETA = direction_ * deg_to_rad;
-
-                            ROBOT_X_STEP = 0;
+                           /* ROBOT_X_STEP = 0;
                             ROBOT_Y_STEP = 0;
-                            ROBOT_THETA_STEP = 0;
+                            ROBOT_THETA_STEP = 0;*/
                             ekf_step.restart_calculation();
                             actuator(2, 0, 0);
                             break;
 
                         }
-                        else {
+                        else if (abs(current_angle_deg_ekf) < (angle)) {
+                            /*Serial.print(" angle turning: ");
+                            Serial.print(current_angle_deg_ekf);
+                            Serial.print(" angle : ");
+                            Serial.println(angle);*/
                             TARGET_ANGLE_ROTATION = angle * deg_to_rad;
-                            CURRENT_THETA_DEG = ROBOT_THETA_STEP * deg_to_rad;
+                            CURRENT_THETA_DEG = ROBOT_THETA_STEP;
                             rotation_output(); //calculate PID values
 
-                            //Serial.print("teta deg : ");
-                            //Serial.println(ROBOT_THETA_ROTATION * rad_to_deg);
+                            
 
                             /*Serial.print("L : ");
                             Serial.print(PID_ROTATION_OUTPUT_L);
                             Serial.print("  R : ");
                             Serial.println(PID_ROTATION_OUTPUT_R);*/
-
+                            //Serial.print("dir rotation: ");
+                            //Serial.println(dir_rotation);
                             if (dir_rotation == 3) { //'L'
                                 actuator(3, PID_ROTATION_OUTPUT_L + 20, PID_ROTATION_OUTPUT_R + 23);
                             }
@@ -2061,7 +2067,14 @@ private:
 
                     //run stop to motors
                     actuator(2, 0, 0);
+                    ROBOT_X_STEP = 0;
+                    ROBOT_Y_STEP = 0;
+                    ROBOT_THETA_STEP = 0;
+                    
+                    
                 }
+                break;
+
 
             }
         }
@@ -2119,10 +2132,12 @@ private:
                 Serial.print(" Y: ");
                 Serial.print(ROBOT_Y);
                 Serial.print(" tet: ");
-                Serial.print(ROBOT_THETA * rad_to_deg);
-                Serial.print(" ROT: ");
-                Serial.print(copy_theta * rad_to_deg);
-                Serial.println();*/
+                Serial.print(ROBOT_THETA * rad_to_deg);*/
+                //Serial.print(" ROT: ");
+                //Serial.println(ROBOT_THETA_ROTATION * rad_to_deg);
+                //Serial.print("teta deg : ");
+                //Serial.println(ROBOT_THETA_ROTATION * rad_to_deg);
+                
 
 
                 if (ROBOT_LAST_TRAVELED_DISTANCE == 0.0 and distance_ == 0.0) {
@@ -2275,10 +2290,10 @@ BODY bod; //main class
 bool is_restarted = false;
 void loop() {
 
-    //int winkel = 182;
-    //int diff = 182;
+    //int winkel = 30;
+    //int diff = 30;
     //if (ROBOT_ARRIVED == 0) {
-    //    bod.move_command(winkel, 0, 4 , diff); // (deg,dist,3/4,diff)
+    //    bod.move_command(winkel, 50, 4 , diff); // (deg,dist,3/4,diff)
     //    Serial.print(" X: ");
     //    Serial.print(ROBOT_X);
     //    Serial.print("  Y: ");
@@ -2298,7 +2313,7 @@ void loop() {
     
     //sendData();
     if (mode == 1 and ROBOT_ARRIVED==0) {
-       // Serial.println(" mode 1");
+       //Serial.println(" mode 1");
         bod.move_command(
             TARGET_ORIENTATION_JETSON,
             DISTANCE_JETSON,
@@ -2317,7 +2332,7 @@ void loop() {
     }
 
     else if (mode == 3 and is_restarted==false) {
-        //Serial.println(" mode 3 restart");
+       // Serial.println(" mode 3 restart");
        // ROBOT_X = 0.0;
        // ROBOT_Y = 0.0;
        // ROBOT_THETA = 0.0; //work if restart angle, small difference
@@ -2425,7 +2440,7 @@ void batery_measuring() {
             if (battery > upper_bat_range) { battery = upper_bat_range; }
             if (battery < low_bat_range) { battery = low_bat_range; }
             //bat_factor_pid = map(battery, 760, 870, 40, 0); //12.54-11V //for motors
-            bat_factor_pid = map(battery, 670, 845, 23, 0); //12.54-11V //for motors
+            bat_factor_pid = map(battery, 670, 845, 17, 0); //12.54-11V //for motors
             // BAT_percent calculation
             BAT_percent = map(battery, 670, 845, 0, 100); //10.00 - 12.54 V //battery=(V*204.6)/ 3.0423
             if (BAT < 9) { BAT_percent = 0; }
