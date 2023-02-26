@@ -1954,8 +1954,9 @@ private:
         /// <param name="degrees_from_act_to_target_pos"> difference from cur deg to wished deg</param>
         /// interval_delta_time = 0.4   interval of calculating speed and everything
         /// <returns></returns>
-        //vector<int> separated_degrees_if_more_than_90;
-        int separated_degrees_if_more_than_90[3] = { 0,0,0 };
+        
+        int separated_degrees_if_more_than_90[3] = { 0,-1,-1 };
+        int step_ = 90;
         ROBOT_X_STEP = 0.;
         ROBOT_Y_STEP = 0.;
         ROBOT_THETA_STEP = 0.;
@@ -1965,40 +1966,42 @@ private:
                 //return true;
                 break;
             }
-            else {               
-                //// step 30 degrees [90,90,3]
-                int step_ = 90;
-                int delimo = degrees_from_act_to_target_pos / step_;
-
-                if ((degrees_from_act_to_target_pos % step_) == 0) {
-                    for (int i = 0; i < delimo; i++) {
-                        //separated_degrees_if_more_than_90.push_back(step);
-                        separated_degrees_if_more_than_90[i] = (double)step_;
+            else {    
+                if (direction_ >= step_) {
+                    //// step 90 degrees [90,90,3]                   
+                    int delimo = degrees_from_act_to_target_pos / step_;
+                    if ((degrees_from_act_to_target_pos % step_) == 0) {
+                        for (int i = 0; i < delimo; i++) {                           
+                            separated_degrees_if_more_than_90[i] = (double)step_;
+                        }
                     }
-                }
 
-                else { // need change for 180 deg
-                    for (int i = 0; i < delimo; i++) {
-                        separated_degrees_if_more_than_90[i] = step_;
+                    else { // need change for 180 deg
+                        for (int i = 0; i < delimo; i++) {
+                            separated_degrees_if_more_than_90[i] = step_;                            
+                        }
                         int rest = degrees_from_act_to_target_pos % step_;
-                        separated_degrees_if_more_than_90[i + 1] = rest;
+                        separated_degrees_if_more_than_90[delimo] = rest;
                     }
-
+                
                 }
-                //////
+                else if (direction_ < step_) {
+                    separated_degrees_if_more_than_90[0] = direction_;
+                }
+                
                 for (double angle : separated_degrees_if_more_than_90) {
-                    Serial.print("angle:  ");
-                    Serial.println(angle);
+                    //Serial.print("target angle:  ");
+                    //Serial.println(angle);
 
                     ROBOT_X_STEP = 0;
                     ROBOT_Y_STEP = 0;
                     ROBOT_THETA_STEP = 0;
                     ekf_step.restart_calculation();
-                    if (angle == 0) {
+                    if (angle < 0) {
                         continue;
                     }
                     while (true) {
-                        Serial.println(" rotation  ");
+                        //Serial.println(" rotation  ");
                         curTime = millis();
                         if (curTime - prevTime >= intervalTime) {
                             ///////// SYNCHRONISATION !!!!! /////////////////
@@ -2061,11 +2064,7 @@ private:
                 }
 
             }
-
-            // return true;
-
         }
-
     }
 
 
@@ -2097,7 +2096,7 @@ private:
         //ekf_odo.restart_calculation_odometry();
         //ROBOT_THETA = 0.0; // work only ahead
         while (true) {
-            Serial.println("move");
+            //Serial.println("move");
             curTime = millis();
             if (curTime - prevTime >= intervalTime) { //400 ms or less make 100ms
                 ///////// SYNCHRONISATION !!!!! /////////////////
@@ -2175,7 +2174,7 @@ public:
         //2. move ahead to wished distance
         move_one_step(distance);
         ROBOT_ARRIVED = 1;
-        Serial.println("end move command  ");
+        //Serial.println("end move command  ");
         
 
 
@@ -2276,10 +2275,10 @@ BODY bod; //main class
 bool is_restarted = false;
 void loop() {
 
-    //int winkel = 90;
-    //int diff = 90;
-    //if (ROBOT_ARRIVED == false) {
-    //    bod.move_command(winkel, 30, 'R', diff); // (deg,dist,L/R,diff)
+    //int winkel = 182;
+    //int diff = 182;
+    //if (ROBOT_ARRIVED == 0) {
+    //    bod.move_command(winkel, 0, 4 , diff); // (deg,dist,3/4,diff)
     //    Serial.print(" X: ");
     //    Serial.print(ROBOT_X);
     //    Serial.print("  Y: ");
@@ -2291,12 +2290,15 @@ void loop() {
     //}
    
 
+    //###############################################################
+    //#####################     JETSON       ########################
+    //###############################################################
     
-    info_from_jetson(); // mode 0=nothing, 1= working mode, 2 = restart
+    info_from_jetson(); // mode 0=nothing, 1= working mode, 2 = neutral 3=restart 
     
     //sendData();
     if (mode == 1 and ROBOT_ARRIVED==0) {
-        Serial.println(" mode 1");
+       // Serial.println(" mode 1");
         bod.move_command(
             TARGET_ORIENTATION_JETSON,
             DISTANCE_JETSON,
@@ -2310,12 +2312,12 @@ void loop() {
         //sendData();
     }
     else if (mode == 2) {
-        Serial.println(" mode 2 neutral- Wait new command");
+        //Serial.println(" mode 2 neutral- Wait new command");
         
     }
 
     else if (mode == 3 and is_restarted==false) {
-        Serial.println(" mode 3 restart");
+        //Serial.println(" mode 3 restart");
        // ROBOT_X = 0.0;
        // ROBOT_Y = 0.0;
        // ROBOT_THETA = 0.0; //work if restart angle, small difference
@@ -2327,25 +2329,6 @@ void loop() {
     else {
        // Serial.println(" mode 0");
     }
-
-
-    /*Serial.print("Jetson:  ");
-    Serial.print(TARGET_ORIENTATION_JETSON);
-    Serial.print("  ");
-    Serial.print(DISTANCE_JETSON);
-
-    Serial.print("  ");
-    Serial.print(DIRECTION);
-    Serial.print("  ");
-    Serial.print(DIFFERENCE_ANGLE_JETSON);
-
-    Serial.print(" mode ");
-    Serial.print(mode);
-
-    Serial.print(" arrived: ");
-    Serial.println(ROBOT_ARRIVED);*/
-
-
 }
 
 ////////////////////////////// END LOOP //////////////////////////////////////////////////////////////
