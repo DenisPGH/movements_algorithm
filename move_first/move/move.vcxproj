@@ -142,6 +142,7 @@
     <ClCompile Include="move.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="01_03_23.h" />
     <ClInclude Include="14_02_23.h" />
     <ClInclude Include="15_02_23.h" />
     <ClInclude Include="17_02_23.h" />
