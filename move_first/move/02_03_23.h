@@ -49,11 +49,11 @@ const double Ki_R = 0; //  # 0
 const double Kd_R = 0; // # 0
 
 
-const double Kp_L_rot = 2.9; // # 2.9
+const double Kp_L_rot = 2; // # 2.9
 const double Ki_L_rot = 0; // # 0
 const double Kd_L_rot = 0; // # 0
 
-const double Kp_R_rot = 2.9; // # 2.9
+const double Kp_R_rot = 2; // # 2.9
 const double Ki_R_rot = 0; //  # 0
 const double Kd_R_rot = 0; // # 0
 
@@ -633,7 +633,7 @@ void rotation(int direction_, int dir_rotation = 0,
                         //Serial.print("dir rotation: ");
                         //Serial.println(dir_rotation);
                         if (dir_rotation == 3) { //'L'
-                            actuator(3, PID_ROTATION_OUTPUT_L + 20, PID_ROTATION_OUTPUT_R + 23);
+                            actuator(3, PID_ROTATION_OUTPUT_L + 20, PID_ROTATION_OUTPUT_R + 20);
                         }
                         else if (dir_rotation == 4) { //'R'
                             actuator(4, PID_ROTATION_OUTPUT_L + 23, PID_ROTATION_OUTPUT_R + 23);
