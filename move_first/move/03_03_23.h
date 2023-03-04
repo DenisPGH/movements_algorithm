@@ -109,11 +109,7 @@ double dist_cm_L = 0;
 double dist_cm_R = 0;
 
 
-const double rpm_to_radians = 0.10471975512;
-const double rad_to_deg = 57.2957795; // 57.2957795
-const double deg_to_rad = 0.0174532925; // 0.0174532925
 
-const float Pi = 3.141592653589793;
 
 int BAT_MEASSURING_INTERVAL = 100;  //1500
 
@@ -134,6 +130,12 @@ double wheel_diameter = 6.8; //cm 6.8  21.3
 double radius_wheel = 3.4; //cm 0.034m  3.4 cm  68mm diameter
 double wheel_round = 21.3; // obikolka na koleloto w cm
 double width_of_car = 18.0;
+
+const double rpm_to_radians = 0.10471975512;
+const double rad_to_deg = 57.2957795; // 57.2957795
+const double deg_to_rad = 0.0174532925; // 0.0174532925
+
+const float Pi = 3.141592653589793;
 
 
 const int N = 3;

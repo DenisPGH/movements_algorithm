@@ -9,110 +9,24 @@
 
 
 using namespace std;
-double ROBOT_X_STEP = 0; //main vaiable
-double ROBOT_Y_STEP = 0;//main vaiable
-double ROBOT_THETA_STEP = 0; //radians main vaiable 
+double ROBOT_X_STEP = 0.0; //main vaiable
+double ROBOT_Y_STEP = 0.0;//main vaiable
+double ROBOT_THETA_STEP = 0.0; //radians main vaiable 
 const int N = 3;
 const double rad_to_deg = 57.2957795; // 57.2957795
 const double deg_to_rad = 0.0174532925; // 0.0174532925
+double wheel_diameter = 6.8; //cm 6.8  21.3
+double radius_wheel = 3.4; //cm 0.034m  3.4 cm  68mm diameter
+double wheel_round = 21.3; // obikolka na koleloto w cm
+double width_of_car = 18.0;
+const double rpm_to_radians = 0.10471975512;
 
 
-class KalmanVariablesSTEP_2 {
+const float Pi = 3.141592653589793;
+double position_rotation_step[3]{ 0,0,0 }; //use this in roatation
+
+class MatrixFunction {
 public:
-
-    double CONTROL_YAW_RATE = 0.0;  // rad / sec
-    double WIDTH_CAR = 18.0;
-    double RADIUS_WHEEL = 3.4;
-    double rpm_to_radians = 0.10471975512;
-
-    //A matrix = > how state of the system[x, y, yaw] changes
-    double STATE_CHANGES_X = 1.0;
-    double STATE_CHANGES_Y = 1.0;
-    double STATE_CHANGES_THETA = 0.1;  // 1.0
-    // proccess noice
-    double PROCCESS_NOICE_X = 0.01;  // 0.01
-    double PROCCESS_NOICE_Y = 0.01;  // 0.01
-    double PROCCESS_NOICE_THETA = 0.003; // 0.003
-    // Q matrix = > more Q in sensor, small Q prediction
-    double STATE_MODEL_NOICE_X = 1.0;
-    double STATE_MODEL_NOICE_Y = 1.0; //1
-    double STATE_MODEL_NOICE_THETA = 1.0;
-    // H identity matrix Measurement matrix, convert the predicted state = > measurments state
-    double IDENTITY_X = 1.0;
-    double IDENTITY_Y = 1.0;
-    double IDENTITY_THETA = 1.0;
-
-    // R Sensor measurement noise covariance, if sure in R, R = 0
-    double SENSOR_MEASURMENT_NOICE_X = 1.0;
-    double SENSOR_MEASURMENT_NOICE_Y = 1.0;
-    double SENSOR_MEASURMENT_NOICE_THETA = 1.0;  // 1.0
-    // Sensor noice
-    double SENSOR_NOICE_X = -0.04; // - 0.04
-    double SENSOR_NOICE_Y = 0.048; //0.049, 0.042
-    double SENSOR_NOICE_THETA = 0.0027;  //  + 0.0027,  which direction make noise
-
-    // estimation state, where the robot start
-    double ESTIMATET_STATE_LAST_X = 0;
-    double ESTIMATET_STATE_LAST_Y = 0;
-    double ESTIMATET_STATE_LAST_THETA = 0; //radians
-    double state_estimate_k_minus_1[3] = { ESTIMATET_STATE_LAST_X,
-        ESTIMATET_STATE_LAST_Y,
-        ESTIMATET_STATE_LAST_THETA }; // [meters, meters, radians]
-
-
-    // P matrix
-    double ACCURACY_STATE_X = 0.1;
-    double ACCURACY_STATE_Y = 0.1;
-    double ACCURACY_STATE_THETA = 0.1; // 0.1
-
-    double ACCURACY_STATE_X_curr = 0.1;
-    double ACCURACY_STATE_Y_curr = 0.1;
-    double ACCURACY_STATE_THETA_curr = 0.1; // 0.1
-
-    double P_k_minus_1[3][3] = { {ACCURACY_STATE_X, 0, 0},
-                                {0, ACCURACY_STATE_Y, 0},
-                                {0, 0, ACCURACY_STATE_THETA} };
-
-
-
-};
-
-
-
-class KalmanSTEP_2 : public KalmanVariablesSTEP_2 {
-    double control_vector_k_minus_1[3] = { 0, 0, CONTROL_YAW_RATE };
-    double A_k_minus_1[3][3] = {
-                {STATE_CHANGES_X, 0, 0},
-                { 0, STATE_CHANGES_Y, 0},
-                {0, 0, STATE_CHANGES_THETA} };
-    double process_noise_v_k_minus_1[3] = { PROCCESS_NOICE_X,
-                                            PROCCESS_NOICE_Y,
-                                            PROCCESS_NOICE_THETA };
-    double Q_k[3][3] = { {STATE_MODEL_NOICE_X, 0, 0},
-                       {0, STATE_MODEL_NOICE_Y, 0},
-                       {0, 0, STATE_MODEL_NOICE_THETA} };
-
-    double H_k[3][3] = { {IDENTITY_X, 0, 0},
-                        {0, IDENTITY_Y, 0 },
-                         {0, 0, IDENTITY_THETA} };
-
-    double R_k[3][3] = { {SENSOR_MEASURMENT_NOICE_X, 0, 0},
-                        {0, SENSOR_MEASURMENT_NOICE_Y, 0},
-                        {0, 0, SENSOR_MEASURMENT_NOICE_THETA} };
-
-    double sensor_noise_w_k[3] = { SENSOR_NOICE_X,
-                    SENSOR_NOICE_Y,
-                    SENSOR_NOICE_THETA };
-
-    double R_matrix[3][3] = { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };
-    double prediction_ekf[3] = { 0,0,0 };
-
-    double final_P_k[3][3] = { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };
-    double state_estimate_k_updated_step[3] = { 0,0,0 };
-
-
-
-private:
     void multiply_3x3__3x3(const double(&a)[N][N],
         const double(&b)[N][N], double(&c)[N][N]) {
         // multiply two matrices 3x3 and 3x3
@@ -231,80 +145,108 @@ private:
         }
     }
 
-   
 
 
 
 
 
 
-    void get_B(double control_vector_k_minus_1_r[3],
-        double state_estimate_k_minus_1_r[3], double dt_r) {
-        /*  :param control_vector_k_minus_1 : [rpm, rpm, rad / sec]
-            : param state_estimate_k_minus_1 : [cm, cm, rad]
-            : return : prediction in world frame
-            """*/
-
-        double vel_l = control_vector_k_minus_1_r[0] * rpm_to_radians;
-        double vel_r = control_vector_k_minus_1_r[1] * rpm_to_radians;
-        double omega = (((vel_l - vel_r) / (WIDTH_CAR)) * RADIUS_WHEEL) * dt_r;
-        double R = 0;
-        if (vel_l != vel_r) {
-            R = WIDTH_CAR / 2.0 * ((vel_r + vel_l) / (vel_l - vel_r));
-        }
-        else { R = 0.0; }
 
 
-        double ICC_x = state_estimate_k_minus_1_r[0] - R * sin(state_estimate_k_minus_1_r[2]);
-        double ICC_y = state_estimate_k_minus_1_r[1] + R * cos(state_estimate_k_minus_1_r[2]);
-
-        double R_matrix[3][3] = { {cos(omega), -sin(omega), 0},
-                                 {sin(omega), cos(omega), 0},
-                                 {0, 0, 1},
-        };
-
-        double A[3] = { state_estimate_k_minus_1_r[0] - ICC_x,
-                        state_estimate_k_minus_1_r[1] - ICC_y,
-                            state_estimate_k_minus_1_r[2] };
-
-        double B[3] = { ICC_x, ICC_y, omega };
+};
 
 
-        //float result[3] = R_matrix @ A + B.T;
-        double result[3] = { 0.0,0.0,0.0 };
-        //calculation the matrix
+class KalmanSTEPnew : public MatrixFunction{
+    //A matrix = > how state of the system[x, y, yaw] changes
+    double STATE_CHANGES_X = 1.0;
+    double STATE_CHANGES_Y = 1.0;
+    double STATE_CHANGES_THETA = 0.1;  // 1.0
+    // proccess noice
+    double PROCCESS_NOICE_X = 0.01;  // 0.01
+    double PROCCESS_NOICE_Y = 0.01;  // 0.01
+    double PROCCESS_NOICE_THETA = 0.003; // 0.003
+    // Q matrix = > more Q in sensor, small Q prediction
+    double STATE_MODEL_NOICE_X = 1.0;
+    double STATE_MODEL_NOICE_Y = 1.0; //1
+    double STATE_MODEL_NOICE_THETA = 1.0;
+    // H identity matrix Measurement matrix, convert the predicted state = > measurments state
+    double IDENTITY_X = 1.0;
+    double IDENTITY_Y = 1.0;
+    double IDENTITY_THETA = 1.0;
 
-        for (int i = 0; i < 3; i++) { // All array elements
-            result[i] = 0;
-            for (int j = 0; j < 3; j++) {
-                result[i] += R_matrix[j][i] * A[i];
-            }
+    // R Sensor measurement noise covariance, if sure in R, R = 0
+    double SENSOR_MEASURMENT_NOICE_X = 1.0;
+    double SENSOR_MEASURMENT_NOICE_Y = 1.0;
+    double SENSOR_MEASURMENT_NOICE_THETA = 1.0;  // 1.0
+    // Sensor noice
+    double SENSOR_NOICE_X = 0.00004; // - 0.04
+    double SENSOR_NOICE_Y = 0.0048; //0.049, 0.042
+    double SENSOR_NOICE_THETA = -0.1;  //  + 0.0027,-0.1  which direction make error + less angle, - more
 
-        }
+    // estimation state, where the robot start
+    double ESTIMATET_STATE_LAST_X = 0;
+    double ESTIMATET_STATE_LAST_Y = 0;
+    double ESTIMATET_STATE_LAST_THETA = 0; //radians
+    double state_estimate_k_minus_1[3] = { ESTIMATET_STATE_LAST_X,
+        ESTIMATET_STATE_LAST_Y,
+        ESTIMATET_STATE_LAST_THETA }; // [meters, meters, radians]
 
 
-        prediction_ekf[0] = result[0] + B[0];
-        prediction_ekf[1] = result[1] + B[1];
-        prediction_ekf[2] = result[2] + B[2];
+    // P matrix
+    double ACCURACY_STATE_X = 0.1;
+    double ACCURACY_STATE_Y = 0.1;
+    double ACCURACY_STATE_THETA = 0.1; // 0.1
+
+    double ACCURACY_STATE_X_curr = 0.1;
+    double ACCURACY_STATE_Y_curr = 0.1;
+    double ACCURACY_STATE_THETA_curr = 0.1; // 0.1
+
+    double P_k_minus_1[3][3] = { {ACCURACY_STATE_X, 0, 0},
+                                {0, ACCURACY_STATE_Y, 0},
+                                {0, 0, ACCURACY_STATE_THETA} };
 
 
-    }
+    ////////////////////////////////////////////////////////////////////
+    double A_k_minus_1[3][3] = {
+                {STATE_CHANGES_X, 0, 0},
+                { 0, STATE_CHANGES_Y, 0},
+                {0, 0, STATE_CHANGES_THETA} };
+    double process_noise_v_k_minus_1[3] = { PROCCESS_NOICE_X,
+                                            PROCCESS_NOICE_Y,
+                                            PROCCESS_NOICE_THETA };
+    double Q_k[3][3] = { {STATE_MODEL_NOICE_X, 0, 0},
+                       {0, STATE_MODEL_NOICE_Y, 0},
+                       {0, 0, STATE_MODEL_NOICE_THETA} };
+
+    double H_k[3][3] = { {IDENTITY_X, 0, 0},
+                        {0, IDENTITY_Y, 0 },
+                         {0, 0, IDENTITY_THETA} };
+
+    double R_k[3][3] = { {SENSOR_MEASURMENT_NOICE_X, 0, 0},
+                        {0, SENSOR_MEASURMENT_NOICE_Y, 0},
+                        {0, 0, SENSOR_MEASURMENT_NOICE_THETA} };
+
+    double sensor_noise_w_k[3] = { SENSOR_NOICE_X,
+                    SENSOR_NOICE_Y,
+                    SENSOR_NOICE_THETA };
+
+    double R_matrix[3][3] = { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };
+    double prediction_ekf[3] = { 0,0,0 };
+
+    double final_P_k[3][3] = { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };
+    double state_estimate_k_updated_step[3] = { 0,0,0 };
 
 
 
     void ekf(double(&z_k_observation_vector_re)[3],
-        double(&state_estimate_k_minus_1_re)[3],
-        double control_vector_k_minus_1_re[3],
-        double(&P_k_minus_1_re)[3][3],
-        double dk_re) {
-
-        //print_3x1_matrix(z_k_observation_vector);
-
+        double(&state_estimate_k_minus_1_re)[3],       
+        double(&P_k_minus_1_re)[3][3]
+        ) {
+     
         ////// PREDICT /////////////////////////
         double state_estimate_k_prediction[3] = { 0,0,0 };
-        get_B(control_vector_k_minus_1_re, state_estimate_k_minus_1_re, dk_re);
         for (int i = 0; i < 3; i++) {
-            state_estimate_k_prediction[i] = prediction_ekf[i] +
+            state_estimate_k_prediction[i] = z_k_observation_vector_re[i] +
                 process_noise_v_k_minus_1[i];
 
         }
@@ -391,24 +333,15 @@ private:
 
 
 public:
-    // after ekf 
-
-
-    void calculation_step_2(double(&z_k)[3], double dt_rr, double V_l, double V_r) {
-        double control_vector_k_minus_1_re[3] = { V_l, V_r,CONTROL_YAW_RATE }; // [rpm, rpm, rad / sec]
-
+    
+    void calculation_step(double(&z_k)[3],double V_l, double V_r) {
+        
         //calculate into final_P_k ,state_estimate_k_updated
         if (V_l != 0 || V_r != 0) {
-            ekf(z_k, state_estimate_k_minus_1, control_vector_k_minus_1_re,
-                P_k_minus_1, dt_rr);
+            ekf(z_k, state_estimate_k_minus_1,
+                P_k_minus_1);
 
         }
-
-
-        //update 
-        //state_estimate_k_minus_1 = state_estimate_k_updated
-         //P_k_minus_1 = final_P_k
-
 
     }
 
@@ -435,47 +368,96 @@ public:
     }
 
 
-
 };
+
+
+
+
+void calculation_position_step(double vel_l, double vel_r,
+    double delta_time, double curr_x, double curr_y, double curr_theta) {
+
+    double vel_L = vel_l * rpm_to_radians;
+    double vel_R = vel_r * rpm_to_radians;
+    //curr_theta = curr_theta * (3.1415 / 180);;
+    double omega = (((vel_L - vel_R) / (width_of_car)) * radius_wheel) * delta_time;
+
+    double R = 0;
+    if (vel_L != vel_R) {
+        R = width_of_car / 2.0 * ((vel_R + vel_L) / (vel_L - vel_R));
+    }
+    else { R = 0.0; }
+
+
+    double ICC_x = curr_x - R * sin(curr_theta);
+    double ICC_y = curr_y + R * cos(curr_theta);
+
+    double R_matrix[3][3] = { {cos(omega), -sin(omega), 0},
+                             {sin(omega), cos(omega), 0},
+                             {0, 0, 1},
+    };
+
+    double A[3] = { curr_x - ICC_x,
+                    curr_y - ICC_y,
+                        curr_theta };
+
+    double B[3] = { ICC_x, ICC_y, omega };
+
+
+    //float result[3] = R_matrix @ A + B.T;
+    double result[3] = { 0.0,0.0,0.0 };
+    //calculation the matrix
+
+    for (int i = 0; i < 3; i++) { // All array elements
+        result[i] = 0;
+        for (int j = 0; j < 3; j++) {
+            result[i] += R_matrix[j][i] * A[i];
+        }
+
+    }
+
+
+
+
+    position_rotation_step[0] = result[0] + B[0];
+    position_rotation_step[1] = result[1] + B[1];
+    position_rotation_step[2] = result[2] + B[2];
+
+
+    cout << "== x ===== y ===== theta ==  " << endl;
+    cout << position_rotation_step[0] << " , " << position_rotation_step[1]
+        << " , " << position_rotation_step[2] * rad_to_deg << endl;
+
+
+
+    
+
+    /*ROBOT_X_STEP = position_rotation_step[0];
+    ROBOT_Y_STEP = position_rotation_step[1];
+    ROBOT_THETA_STEP = position_rotation_step[2];*/
+
+    ////// kalman ///////
+    KalmanSTEPnew ekf_step;
+    ekf_step.calculation_step(position_rotation_step, vel_L, vel_R);
+
+}
 
     
 
 
 /////////////////////////////////////////////////
 
-int main()
-{
-   
+int main(){    
+    double v_l = 20;
+    double v_r = -20.00001;
+    double tim = 1; //2=90,1.92=90
 
+    for (int i = 0; i < 3;i++) {
+        calculation_position_step(v_l, v_r, tim, ROBOT_X_STEP, ROBOT_Y_STEP, ROBOT_THETA_STEP);
 
-    double pos[3] = {0.0, 0.0, 90.0* deg_to_rad};
-    KalmanSTEP_2  ekf_step;
-    //KalmanOdometry ekf_odo;
-    ekf_step.calculation_step_2(pos,1,20,20.001);
-    //ekf_odo.calculation_ekf(pos, 1, 20, 20.001);
-                             
+        cout << ROBOT_X_STEP << " , " << ROBOT_Y_STEP << " , " << ROBOT_THETA_STEP * rad_to_deg << endl;
 
-    cout << " res: " << endl;
-    
-    for (int i = 0; i < 3; i++) {
-            
-        if (i < 2) {
-            //cout << ekf_odo.state_estimate_k_updated[i] << "  ";
-            cout << pos[i] << "  ";
-
-            }
-        else {
-            //cout << ekf_odo.state_estimate_k_updated[i] * rad_to_deg << "  ";
-            cout << pos[i] *rad_to_deg << "  ";
-
-        }
-            
-        }
-        cout << endl;
-    
-        cout << " ekf: " << endl;
-        cout << ROBOT_X_STEP << " , "<< ROBOT_Y_STEP << " , "<< ROBOT_THETA_STEP * rad_to_deg <<  endl;
-    
+    }
+             
     return 0;
 }
 

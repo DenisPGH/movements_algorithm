@@ -1,2 +1,3 @@
 ﻿  move.cpp
+C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\move\move.cpp(25,35): warning C4305: 'initializing': truncation from 'double' to 'float'
   move.vcxproj -> C:\Users\Owner\Desktop\projects\movements_algorithm\move_first\Debug\move.exe
