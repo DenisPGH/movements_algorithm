@@ -371,8 +371,6 @@ public:
 };
 
 
-
-
 void calculation_position_step(double vel_l, double vel_r,
     double delta_time, double curr_x, double curr_y, double curr_theta) {
 
