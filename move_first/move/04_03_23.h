@@ -443,7 +443,7 @@ class KalmanSTEPnew : public MatrixFunction {
     // Sensor noice
     double SENSOR_NOICE_X = 0.00004; // - 0.04
     double SENSOR_NOICE_Y = 0.0048; //0.049, 0.042
-    double SENSOR_NOICE_THETA = -0.1;  //  + 0.0027,-0.1  which direction make error + less angle, - more
+    double SENSOR_NOICE_THETA = -0.001;  //  + 0.0027,-0.1  which direction make error + less angle, - more
 
     // estimation state, where the robot start
     double ESTIMATET_STATE_LAST_X = 0;
@@ -952,7 +952,7 @@ void rotation(int direction_, int dir_rotation = 0,
                         prevTime = curTime;
 
                     }
-                    double current_angle_deg_ekf = ROBOT_THETA_STEP * rad_to_deg; //degrees
+                    
                     /*Serial.print(" direction: ");
                     Serial.print(dir_rotation);
 
@@ -960,7 +960,8 @@ void rotation(int direction_, int dir_rotation = 0,
                     Serial.print(abs(current_angle_deg_ekf));
                     Serial.print(" angle target: ");
                     Serial.println(angle);*/
-
+                                                      
+                    double current_angle_deg_ekf = (ROBOT_THETA_STEP * rad_to_deg); //degrees
 
                     if (abs(current_angle_deg_ekf) >= (angle)) {
                         ROBOT_THETA = direction_ * deg_to_rad;
