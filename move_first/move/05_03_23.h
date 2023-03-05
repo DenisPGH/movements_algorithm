@@ -287,7 +287,7 @@ double position_rotation_step[3]{ 0,0,0 }; //use this in roatation
 bool is_communication_on = false;
 
 
-double SENSOR_NOICE_THETA_GLOBAL = 0.0001;
+double SENSOR_NOICE_THETA_GLOBAL = 0;
 ////////////////////////////////////////  EKF STEP START  //////////////////////////////////////////////////////
 
 class MatrixFunction {
@@ -879,8 +879,8 @@ void actuator(int mode_, double pwm_l = 0, double pwm_r = 0) {
 
 
 
-    if (LED_STATUS_JETSON == 0) { digitalWrite(oko, LOW); } // Lights on
-    else if (LED_STATUS_JETSON == 1) { digitalWrite(oko, HIGH); } // lights off
+    if (LED_STATUS_JETSON == 10) { digitalWrite(oko, LOW); } // Lights on
+    else if (LED_STATUS_JETSON == 11) { digitalWrite(oko, HIGH); } // lights off
 
 
 
@@ -907,11 +907,11 @@ void rotation(int direction_, int dir_rotation = 0,
     Serial.print(ROBOT_THETA * rad_to_deg);
     Serial.print(" d: ");
     Serial.println(dir_rotation);*/
-    if (dir_rotation == 3){
+    if (dir_rotation == 3 ){
         SENSOR_NOICE_THETA_GLOBAL = 0.009; //0.01
     }
-    else if (dir_rotation == 4) {
-        SENSOR_NOICE_THETA_GLOBAL = -0.009; //-0.01
+    else if (dir_rotation == 4 ) {
+        SENSOR_NOICE_THETA_GLOBAL = -0.0009; //-0.01
     }
 
 
@@ -1037,7 +1037,7 @@ void rotation(int direction_, int dir_rotation = 0,
 
 
 void move_one_step(double distance_) {
-    //Serial.println("in move ");
+    //Serial.println(distance_);
     ROBOT_ARRIVED = 0;
     sum_pulses_L = 0.0; //restart distance measuring
     sum_pulses_R = 0.0;
@@ -1188,7 +1188,7 @@ void loop() {
 
     /*if (counter_test == 0) {
         Serial.println(" right 90 deg");
-        move_command(90, 0, 4 , 90); // (deg,dist,3/4,diff) r=4,l=3
+        move_command(0, 50, 4 , 90); // (deg,dist,3/4,diff) r=4,l=3
         Serial.print(" X: ");
         Serial.print(ROBOT_X);
         Serial.print("  Y: ");
@@ -1216,7 +1216,7 @@ void loop() {
 
     info_from_jetson();
     if (mode == 1 and ROBOT_ARRIVED == 0) {
-        //Serial.println(" mode 1");
+        Serial.println(" mode 1");
         is_communication_on = true; //false
         move_command(
             TARGET_ORIENTATION_JETSON,
