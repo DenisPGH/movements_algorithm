@@ -1119,8 +1119,13 @@ void rotation(int direction_, int dir_rotation = 0,
     ROBOT_THETA_STEP = 0.;
     rpm_L = 0.0;
     rpm_R = 0.0;
+    
+    KalmanSTEPnew ekf_step;
+    ekf_step.restart_calculation();
     /*Serial.print(" direction: ");
     Serial.print(direction_);
+
+    
 
     Serial.print(" diff: ");
     Serial.print(degrees_from_act_to_target_pos);
@@ -1202,6 +1207,7 @@ void rotation(int direction_, int dir_rotation = 0,
 
                     if (abs(current_angle_deg_ekf) >= (angle)) {
                         ROBOT_THETA = direction_ * deg_to_rad;
+                        
                         /* ROBOT_X_STEP = 0;
                          ROBOT_Y_STEP = 0;
                          ROBOT_THETA_STEP = 0;*/
@@ -1605,9 +1611,15 @@ void string_to_array(char msg[]) {
 
 void sendData() {
     /// send data to Jetson nano [x(double),y(double),theta(deg,double),bat(double), arrived(0/1),T]
+    double ROBOT_THETA_DEG = ROBOT_THETA * rad_to_deg;
+
+    if (ROBOT_THETA_DEG < 0) {
+        ROBOT_THETA_DEG = int(ROBOT_THETA_DEG) % 360;
+    }
+    
     String outString = String(ROBOT_X) + String("|")
         + String(ROBOT_Y) + String("|") +
-        String((ROBOT_THETA * rad_to_deg)) + String("|") +
+        String(ROBOT_THETA_DEG) + String("|") +
         String(BAT) + String("|") +
         String(ROBOT_ARRIVED) + String('T');
 

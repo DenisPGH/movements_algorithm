@@ -147,6 +147,7 @@
     <ClInclude Include="03_03_23.h" />
     <ClInclude Include="04_03_23.h" />
     <ClInclude Include="05_03_23.h" />
+    <ClInclude Include="12_03_23.h" />
     <ClInclude Include="14_02_23.h" />
     <ClInclude Include="15_02_23.h" />
     <ClInclude Include="17_02_23.h" />
