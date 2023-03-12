@@ -714,7 +714,7 @@ class KalmanROTATIONnew : public MatrixFunction {
     // proccess noice
     double PROCCESS_NOICE_X = 0.01;  // 0.01
     double PROCCESS_NOICE_Y = 0.01;  // 0.01
-    double PROCCESS_NOICE_THETA = 0.003; // 0.003
+    double PROCCESS_NOICE_THETA = 0.0003; // 0.003
     // Q matrix = > more Q in sensor, small Q prediction
     double STATE_MODEL_NOICE_X = 1.0;
     double STATE_MODEL_NOICE_Y = 1.0; //1
@@ -729,9 +729,9 @@ class KalmanROTATIONnew : public MatrixFunction {
     double SENSOR_MEASURMENT_NOICE_Y = 1.0;
     double SENSOR_MEASURMENT_NOICE_THETA = 1.0;  // 1.0
     // Sensor noice
-    double SENSOR_NOICE_X = 0.00004; // - 0.04
-    double SENSOR_NOICE_Y = 0.0048; //0.049, 0.042
-    double SENSOR_NOICE_THETA = 0.01;  //  + 0.0027,-0.001  which direction make error + less angle, - more
+    double SENSOR_NOICE_X = 0.000000004; // - 0.04
+    double SENSOR_NOICE_Y = 0.000000048; //0.049, 0.042
+    double SENSOR_NOICE_THETA = -0.000000006;  //  ,-0.00001  which direction make error + less angle, - more
 
     // estimation state, where the robot start
     double ESTIMATET_STATE_LAST_X = 0;
